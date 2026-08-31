@@ -415,13 +415,65 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
         {/* Live Execution Console for this Run */}
         {selectedRun?.logs && selectedRun.logs.length > 0 ? (
           <div style={{ marginBottom: "1.5rem" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.6rem", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
                 <h3 style={{ fontSize: "0.9rem", fontWeight: 700 }}>Execution Logs</h3>
                 {isCurrentRunActive && (
                   <span style={{ fontSize: "0.75rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
                     <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-success)" }} className="animate-pulse" />
                     Streaming Live
+                  </span>
+                )}
+                {!isCurrentRunActive && selectedRun.status === "completed" && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "var(--color-success)",
+                      background: "rgba(16, 185, 129, 0.1)",
+                      padding: "0.15rem 0.55rem",
+                      borderRadius: "9999px",
+                      border: "1px solid rgba(16, 185, 129, 0.2)",
+                    }}
+                  >
+                    <CheckCircle size={11} /> Published
+                  </span>
+                )}
+                {!isCurrentRunActive && selectedRun.status === "failed" && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "var(--color-error)",
+                      background: "rgba(239, 68, 68, 0.1)",
+                      padding: "0.15rem 0.55rem",
+                      borderRadius: "9999px",
+                    }}
+                  >
+                    <XCircle size={11} /> Failed
+                  </span>
+                )}
+                {!isCurrentRunActive && selectedRun.status === "cancelled" && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "var(--color-warning)",
+                      background: "rgba(245, 158, 11, 0.1)",
+                      padding: "0.15rem 0.55rem",
+                      borderRadius: "9999px",
+                    }}
+                  >
+                    <XCircle size={11} /> Rolled Back
                   </span>
                 )}
               </div>
@@ -431,6 +483,48 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
                 </button>
               </div>
             </div>
+
+            {/* Finished & Published Highlight Banner */}
+            {!isCurrentRunActive && selectedRun.status === "completed" && (
+              <div
+                style={{
+                  marginBottom: "0.75rem",
+                  padding: "0.65rem 1rem",
+                  background: "rgba(16, 185, 129, 0.06)",
+                  border: "1px solid rgba(16, 185, 129, 0.2)",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "0.5rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <CheckCircle size={15} style={{ color: "var(--color-success)" }} />
+                  <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--color-success)" }}>
+                    Done: Run finished and {selectedRun.articlesGenerated || 0} {selectedRun.articlesGenerated === 1 ? "article" : "articles"} published
+                  </span>
+                </div>
+                <a
+                  href="/"
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    color: "var(--color-accent)",
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
+                  }}
+                >
+                  View Live Site <ExternalLink size={12} />
+                </a>
+              </div>
+            )}
+
             <div
               className="admin-console"
               ref={consoleRef}
