@@ -9,9 +9,11 @@ const ADMIN_PASSWORD = "founder19North*";
 const COOKIE_NAME = "fn_admin_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
+import { createHash } from "crypto";
+
 function getSecret(): Uint8Array {
   const secret = process.env.SESSION_SECRET || "fn-default-session-secret-change-me";
-  return new TextEncoder().encode(secret);
+  return createHash("sha256").update(secret).digest();
 }
 
 export function validatePassword(password: string): boolean {
