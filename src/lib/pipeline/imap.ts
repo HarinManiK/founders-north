@@ -21,8 +21,8 @@ export async function fetchRecentEmails(
     port: config.port,
     secure: config.secure,
     auth: {
-      user: config.user,
-      pass: config.pass,
+      user: config.user.trim(),
+      pass: config.pass.replace(/\s+/g, ""),
     },
     logger: false,
   });
