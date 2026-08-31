@@ -27,6 +27,8 @@ import {
   updateRunStatus,
   appendRunLog,
   generateSlug,
+  getRun,
+  rollbackRun,
 } from "@/lib/db";
 import { toISTString, toISTDateString, toISTHumanDate } from "@/lib/timezone";
 import type {
@@ -51,6 +53,24 @@ function createLogger(runId: string): LogFn {
     // Fire-and-forget log append
     appendRunLog(runId, log).catch(() => {});
   };
+}
+
+async function checkCancellation(runId: string, log: LogFn): Promise<boolean> {
+  try {
+    const current = await getRun(runId);
+    if (current?.status === "cancelled" || current?.cancelRequested) {
+      log("warn", `[STOP] Run ${runId} cancelled by admin. Halting processing and initiating rollback...`);
+      const { deletedArticles, deletedDigests } = await rollbackRun(runId);
+      log("info", `[ROLLBACK] Cleaned up ${deletedArticles} created articles and ${deletedDigests} digests. Run stopped cleanly.`);
+      await updateRunStatus(runId, "cancelled", "cancelled", {
+        completedAt: new Date().toISOString(),
+      });
+      return true;
+    }
+  } catch {
+    // ignore
+  }
+  return false;
 }
 
 /**
@@ -107,6 +127,8 @@ export async function executePipeline(runId: string): Promise<void> {
     await updateRunStatus(runId, "running", "fetching_emails", {
       emailsProcessed: emails.length,
     });
+
+    if (await checkCancellation(runId, log)) return;
 
     // ================================================================
     // STAGE 2: AI Filtering & Topic Extraction
@@ -207,6 +229,8 @@ export async function executePipeline(runId: string): Promise<void> {
       newslettersIdentified: topics.length,
     });
 
+    if (await checkCancellation(runId, log)) return;
+
     // ================================================================
     // STAGE 3: Scrape Source URLs
     // ================================================================
@@ -216,6 +240,8 @@ export async function executePipeline(runId: string): Promise<void> {
     const topicScrapedContent: Map<number, ScrapedContent[]> = new Map();
 
     for (let i = 0; i < topics.length; i++) {
+      if (await checkCancellation(runId, log)) return;
+
       const topic = topics[i];
       const urlsToScrape = (topic.sourceUrls || []).filter((u) => u && u.startsWith("http"));
 
@@ -231,6 +257,8 @@ export async function executePipeline(runId: string): Promise<void> {
       }
     }
 
+    if (await checkCancellation(runId, log)) return;
+
     // ================================================================
     // STAGE 4: Generate In-Depth Articles
     // ================================================================
@@ -243,6 +271,7 @@ export async function executePipeline(runId: string): Promise<void> {
     }> = [];
 
     for (let i = 0; i < topics.length; i++) {
+      if (await checkCancellation(runId, log)) return;
       const topic = topics[i];
       const scraped = topicScrapedContent.get(i) || [];
 
@@ -330,6 +359,8 @@ export async function executePipeline(runId: string): Promise<void> {
       throw new Error("No articles were successfully generated.");
     }
 
+    if (await checkCancellation(runId, log)) return;
+
     // ================================================================
     // STAGE 5: Dynamic Categorization
     // ================================================================
@@ -340,6 +371,8 @@ export async function executePipeline(runId: string): Promise<void> {
     log("info", `[Categorizer] Found ${existingCategories.length} existing categories: ${existingCategories.map((c) => c.name).join(", ") || "(None yet)"}`);
 
     for (const item of generatedArticles) {
+      if (await checkCancellation(runId, log)) return;
+
       const categoryList = existingCategories.map((c) => ({
         id: c.id,
         name: c.name,
@@ -397,6 +430,8 @@ export async function executePipeline(runId: string): Promise<void> {
       }
     }
 
+    if (await checkCancellation(runId, log)) return;
+
     // ================================================================
     // STAGE 6: Persist Articles
     // ================================================================
@@ -421,6 +456,8 @@ export async function executePipeline(runId: string): Promise<void> {
         log("error", `  [Publish Error] Could not save article "${item.article.title}": ${saveErr instanceof Error ? saveErr.message : String(saveErr)}`);
       }
     }
+
+    if (await checkCancellation(runId, log)) return;
 
     // ================================================================
     // STAGE 7: Compile Daily Digest

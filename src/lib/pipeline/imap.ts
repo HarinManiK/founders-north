@@ -55,22 +55,31 @@ export async function fetchRecentEmails(
   onLog: (msg: string) => void
 ): Promise<ExtractedNewsletter[]> {
   const client = new ImapFlow({
-    host: config.host,
-    port: config.port,
-    secure: config.secure,
+    host: config.host || "imap.gmail.com",
+    port: config.port || 993,
+    secure: config.secure !== false,
     auth: {
       user: config.user.trim(),
       pass: config.pass.replace(/\s+/g, ""),
     },
     logger: false,
+    emitLogs: false,
   });
 
   const newsletters: ExtractedNewsletter[] = [];
 
   try {
-    onLog("Connecting to IMAP server...");
-    await client.connect();
-    onLog(`Connected to ${config.host}:${config.port}`);
+    onLog(`Connecting to IMAP server ${config.host || "imap.gmail.com"}:${config.port || 993}...`);
+
+    // Connect with a 25s timeout promise race
+    await Promise.race([
+      client.connect(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("IMAP connection timed out after 25 seconds")), 25000)
+      ),
+    ]);
+
+    onLog(`Connected to ${config.host || "imap.gmail.com"}:${config.port || 993}`);
 
     // Open INBOX
     const lock = await client.getMailboxLock("INBOX");

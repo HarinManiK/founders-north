@@ -348,15 +348,36 @@ export async function appendRunLog(
     });
 }
 
-// ---- Processed Emails ----
-
-export async function markEmailProcessed(email: ProcessedEmail): Promise<void> {
+export async function rollbackRun(runId: string): Promise<{ deletedArticles: number; deletedDigests: number }> {
   const db = getDb();
-  await db.collection("processed_emails").doc(email.uid).set(email);
-}
 
-export async function getProcessedEmailUids(): Promise<Set<string>> {
-  const db = getDb();
-  const snap = await db.collection("processed_emails").get();
-  return new Set(snap.docs.map((d) => d.id));
+  // 1. Delete all articles for this run
+  const articlesSnap = await db.collection("articles").where("runId", "==", runId).get();
+  const categoryIdsToRecount = new Set<string>();
+
+  for (const doc of articlesSnap.docs) {
+    const data = doc.data() as Article;
+    if (data.categoryId) categoryIdsToRecount.add(data.categoryId);
+    await doc.ref.delete();
+  }
+
+  // 2. Recount affected categories
+  for (const catId of categoryIdsToRecount) {
+    try {
+      await recountCategoryArticles(catId);
+    } catch {
+      // ignore
+    }
+  }
+
+  // 3. Delete any digests for this run
+  const digestsSnap = await db.collection("digests").where("runId", "==", runId).get();
+  for (const doc of digestsSnap.docs) {
+    await doc.ref.delete();
+  }
+
+  return {
+    deletedArticles: articlesSnap.size,
+    deletedDigests: digestsSnap.size,
+  };
 }

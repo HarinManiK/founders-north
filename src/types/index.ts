@@ -98,11 +98,12 @@ export type PipelineStage =
   | "compiling_digest"
   | "publishing"
   | "done"
-  | "failed";
+  | "failed"
+  | "cancelled";
 
 export interface PipelineRun {
   id: string;
-  status: "queued" | "running" | "completed" | "failed";
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
   currentStage: PipelineStage;
   startedAt: string;
   completedAt?: string;
@@ -111,6 +112,7 @@ export interface PipelineRun {
   articlesGenerated: number;
   digestId?: string;
   logs?: RunLogMessage[];
+  cancelRequested?: boolean;
   error?: string;
 }
 

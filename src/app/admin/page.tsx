@@ -260,10 +260,35 @@ function PipelineTab() {
     publishing: "Publishing",
     done: "Complete",
     failed: "Failed",
+    cancelled: "Stopped & Rolled Back",
   };
 
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [stopping, setStopping] = useState(false);
+
+  const stopRun = async () => {
+    if (!currentRunId) return;
+    if (!confirm("Are you sure you want to stop this run immediately and undo any created articles/digests?")) return;
+    setStopping(true);
+    try {
+      const res = await fetch("/api/admin/pipeline/stop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ runId: currentRunId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRunning(false);
+        loadRecentRuns();
+      } else {
+        alert(data.error || "Failed to stop run");
+      }
+    } catch {
+      alert("Failed to stop run");
+    }
+    setStopping(false);
+  };
 
   const copyLogs = () => {
     if (!currentRun?.logs) return;
@@ -284,15 +309,28 @@ function PipelineTab() {
             Trigger the AI pipeline to fetch emails, generate articles, and publish.
           </p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={triggerRun}
-          disabled={running}
-          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-        >
-          {running ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} />}
-          {running ? "Running Pipeline..." : "Run Pipeline"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          {running && (
+            <button
+              className="btn btn-danger"
+              onClick={stopRun}
+              disabled={stopping}
+              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+            >
+              {stopping ? <Loader2 className="animate-spin" size={15} /> : <XCircle size={15} />}
+              {stopping ? "Stopping..." : "Stop & Undo Run"}
+            </button>
+          )}
+          <button
+            className="btn btn-primary"
+            onClick={triggerRun}
+            disabled={running}
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+          >
+            {running ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} />}
+            {running ? "Running Pipeline..." : "Run Pipeline"}
+          </button>
+        </div>
       </div>
 
       {/* Current Run Status */}
@@ -428,6 +466,7 @@ function StatusBadge({ status }: { status: string }) {
     running: { icon: <Loader2 className="animate-spin" size={12} />, className: "badge-warning", label: "Running" },
     completed: { icon: <CheckCircle size={12} />, className: "badge-success", label: "Completed" },
     failed: { icon: <XCircle size={12} />, className: "badge-error", label: "Failed" },
+    cancelled: { icon: <XCircle size={12} />, className: "badge-warning", label: "Cancelled & Rolled Back" },
   };
   const c = config[status] || config.queued;
   return (
