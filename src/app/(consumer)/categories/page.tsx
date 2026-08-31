@@ -6,8 +6,8 @@ import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Categories - Founders North",
-  description: "Browse articles by topic category.",
+  title: "Articles - Founders North",
+  description: "Browse curated articles and topics.",
 };
 
 export default async function CategoriesPage() {
@@ -23,9 +23,9 @@ export default async function CategoriesPage() {
     <div className="animate-fade-in" style={{ padding: "2.5rem 0 3rem" }}>
       <div className="container-main">
         <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.5rem" }}>Categories</h1>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.5rem" }}>Articles</h1>
           <p style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            Browse articles by topic. Categories are dynamically created by AI based on article content.
+            Browse articles and news topics curated from top industry newsletters.
           </p>
         </div>
 

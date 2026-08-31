@@ -92,7 +92,7 @@ export default function Footer() {
                   textDecoration: "none",
                 }}
               >
-                Categories
+                Articles
               </Link>
             </div>
           </div>
