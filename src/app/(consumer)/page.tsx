@@ -16,7 +16,7 @@ export default async function HomePage() {
   }
 
   try {
-    topArticles = await getTopArticles(7, 5);
+    topArticles = await getTopArticles(7, 6);
   } catch (err) {
     console.error("Failed to load top articles:", err);
   }
