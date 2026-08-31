@@ -720,6 +720,9 @@ function SettingsTab() {
   const [saved, setSaved] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showGhToken, setShowGhToken] = useState(false);
+  const [testingTrigger, setTestingTrigger] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -736,7 +739,11 @@ function SettingsTab() {
       await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imap: settings.imap, openrouter: settings.openrouter }),
+        body: JSON.stringify({
+          imap: settings.imap,
+          openrouter: settings.openrouter,
+          automation: settings.automation,
+        }),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -746,13 +753,178 @@ function SettingsTab() {
     setSaving(false);
   };
 
+  const testTriggerAction = async () => {
+    setTestingTrigger(true);
+    setTestResult(null);
+    try {
+      const res = await fetch("/api/admin/pipeline/trigger-workflow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          githubToken: settings?.automation?.githubToken,
+          githubRepo: settings?.automation?.githubRepo,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTestResult({ success: true, message: "✓ GitHub Action triggered successfully! Check the Runs tab or GitHub Actions." });
+      } else {
+        setTestResult({ success: false, message: `Error: ${data.error || "Failed to trigger"}` });
+      }
+    } catch (e: unknown) {
+      setTestResult({ success: false, message: `Error: ${e instanceof Error ? e.message : "Network failure"}` });
+    }
+    setTestingTrigger(false);
+  };
+
   if (!settings) {
     return <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}><Loader2 className="animate-spin" size={24} /></div>;
   }
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: "600px" }}>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1.5rem" }}>Mailbox & API Settings</h2>
+      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1.5rem" }}>Mailbox, API & Automation Settings</h2>
+
+      {/* Automated Scheduled Runs */}
+      <div className="card" style={{ marginBottom: "1.5rem", padding: "1.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+          <div>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Automated Scheduled Runs</h3>
+            <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
+              Autonomous execution via GitHub Actions (Zero serverless timeouts, $0 cost).
+            </p>
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={settings.automation?.enabled ?? false}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  automation: {
+                    ...(settings.automation || {
+                      time: "07:30",
+                      timezone: "Asia/Kolkata",
+                      githubToken: "",
+                      githubRepo: "HarinManiK/founders-north",
+                    }),
+                    enabled: e.target.checked,
+                  },
+                })
+              }
+              style={{ width: "16px", height: "16px", cursor: "pointer" }}
+            />
+            {settings.automation?.enabled ? "Enabled" : "Disabled"}
+          </label>
+        </div>
+
+        <div style={{ marginBottom: "1rem" }}>
+          <label className="label">Scheduled Run Time (IST)</label>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <input
+              className="input"
+              type="time"
+              value={settings.automation?.time || "07:30"}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  automation: {
+                    ...(settings.automation || {
+                      enabled: false,
+                      timezone: "Asia/Kolkata",
+                      githubToken: "",
+                      githubRepo: "HarinManiK/founders-north",
+                    }),
+                    time: e.target.value,
+                  },
+                })
+              }
+              style={{ maxWidth: "160px" }}
+            />
+            <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
+              Runs at this exact time (24-hour lookback)
+            </span>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: "1rem" }}>
+          <label className="label">GitHub Personal Access Token (PAT)</label>
+          <div style={{ position: "relative" }}>
+            <input
+              className="input"
+              type={showGhToken ? "text" : "password"}
+              value={settings.automation?.githubToken || ""}
+              onChange={(e) =>
+                setSettings({
+                  ...settings,
+                  automation: {
+                    ...(settings.automation || {
+                      enabled: false,
+                      time: "07:30",
+                      timezone: "Asia/Kolkata",
+                      githubRepo: "HarinManiK/founders-north",
+                    }),
+                    githubToken: e.target.value,
+                  },
+                })
+              }
+              placeholder="github_pat_..."
+              style={{ paddingRight: "2.5rem" }}
+            />
+            <button
+              className="btn-ghost"
+              style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", padding: "0.25rem" }}
+              onClick={() => setShowGhToken(!showGhToken)}
+            >
+              {showGhToken ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+          <p style={{ fontSize: "0.75rem", color: "var(--color-text-tertiary)", marginTop: "0.3rem" }}>
+            Requires a GitHub Personal Access Token with <strong>Actions: Write</strong> permission.
+          </p>
+        </div>
+
+        <div style={{ marginBottom: "1.25rem" }}>
+          <label className="label">GitHub Repository</label>
+          <input
+            className="input"
+            value={settings.automation?.githubRepo || "HarinManiK/founders-north"}
+            onChange={(e) =>
+              setSettings({
+                ...settings,
+                automation: {
+                  ...(settings.automation || {
+                    enabled: false,
+                    time: "07:30",
+                    timezone: "Asia/Kolkata",
+                    githubToken: "",
+                  }),
+                  githubRepo: e.target.value,
+                },
+              })
+            }
+            placeholder="owner/repo (e.g. HarinManiK/founders-north)"
+          />
+        </div>
+
+        {/* Test Trigger Button */}
+        <div style={{ paddingTop: "0.75rem", borderTop: "1px solid var(--color-border-light)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={testTriggerAction}
+            disabled={testingTrigger || !settings.automation?.githubToken}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+          >
+            {testingTrigger ? <Loader2 className="animate-spin" size={14} /> : <Play size={14} />}
+            {testingTrigger ? "Dispatching..." : "Test GitHub Action Runner Now"}
+          </button>
+          {testResult && (
+            <span style={{ fontSize: "0.8rem", color: testResult.success ? "var(--color-success)" : "var(--color-error)" }}>
+              {testResult.message}
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* IMAP Settings */}
       <div className="card" style={{ marginBottom: "1.5rem", padding: "1.5rem" }}>

@@ -22,10 +22,19 @@ export interface PromptSettings {
   digestPrompt: string;
 }
 
+export interface AutomationConfig {
+  enabled: boolean;
+  time: string; // e.g. "07:30"
+  timezone?: string; // e.g. "Asia/Kolkata"
+  githubToken?: string;
+  githubRepo?: string;
+}
+
 export interface AppSettings {
   imap: MailboxConfig;
   openrouter: OpenRouterConfig;
   prompts: PromptSettings;
+  automation?: AutomationConfig;
 }
 
 export interface SourceLink {

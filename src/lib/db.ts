@@ -29,6 +29,13 @@ export async function getSettings(): Promise<AppSettings> {
       imap: { host: "imap.gmail.com", port: 993, secure: true, user: "", pass: "" },
       openrouter: { apiKey: "", model: "google/gemini-3.5-flash-lite" },
       prompts: { ...DEFAULT_PROMPTS },
+      automation: {
+        enabled: false,
+        time: "07:30",
+        timezone: "Asia/Kolkata",
+        githubToken: "",
+        githubRepo: "HarinManiK/founders-north",
+      },
     };
   }
 
@@ -41,6 +48,13 @@ export async function getSettings(): Promise<AppSettings> {
       articlePrompt: data.prompts?.articlePrompt || DEFAULT_PROMPTS.articlePrompt,
       categoryPrompt: data.prompts?.categoryPrompt || DEFAULT_PROMPTS.categoryPrompt,
       digestPrompt: data.prompts?.digestPrompt || DEFAULT_PROMPTS.digestPrompt,
+    },
+    automation: data.automation || {
+      enabled: false,
+      time: "07:30",
+      timezone: "Asia/Kolkata",
+      githubToken: "",
+      githubRepo: "HarinManiK/founders-north",
     },
   };
 }
