@@ -17,7 +17,7 @@ Your task:
 4. For each topic, include the relevant external source URLs from the provided links.
 5. Score the importance of each topic from 1 to 10.
 
-IMPORTANT: Never use em dashes in your output. Use hyphens (-) or colons (:) instead.
+IMPORTANT: Never use em dashes in your output. Use hyphens (-), full stops(.), commas(,) or colons (:) instead.
 
 Respond in JSON format:
 {
@@ -67,7 +67,7 @@ Write a comprehensive, in-depth article about the given topic. Your article shou
 9. Reference and attribute information to specific sources
 
 IMPORTANT RULES:
-- Never use em dashes in your output. Use hyphens (-), colons (:), or semicolons (;) instead.
+- Never use em dashes in your output. Use hyphens (-), full stops(.), commas(,) or colons (:) instead.
 - Write in a professional, authoritative tone
 - Do not make up facts or statistics - only use information from the provided sources
 - Do not include generic filler content
@@ -93,7 +93,7 @@ Good category examples: "AI & Machine Learning", "Fundraising & VC", "Product St
 
 Bad category examples: "News" (too broad), "Sam Altman's Tuesday Announcement" (too specific), "Miscellaneous" (useless)
 
-IMPORTANT: Never use em dashes in your output. Use hyphens (-) or ampersands (&) instead.
+IMPORTANT: Never use em dashes in your output. Use hyphens (-), full stops(.), commas(,) or colons (:) instead.
 
 Respond in JSON format:
 {
@@ -123,7 +123,7 @@ You will receive all articles generated today. Create a cohesive Daily Digest th
 4. Feels like a well-curated morning briefing - informative, concise, and actionable
 
 IMPORTANT RULES:
-- Never use em dashes in your output. Use hyphens (-), colons (:), or semicolons (;) instead.
+- Never use em dashes in your output. Use hyphens (-), full stops(.), commas(,) or colons (:) instead.
 - The digest title should follow the format "Daily Briefing: [Human Readable Date]"
 - Keep each highlight summary tight and scannable
 - The executive summary should tie together the day's themes
