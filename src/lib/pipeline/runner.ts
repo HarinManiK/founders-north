@@ -485,6 +485,8 @@ export async function executePipeline(runId: string): Promise<void> {
         title: string;
         summary: string;
         highlights: Array<{
+          articleIndex?: number;
+          articleSlug?: string;
           title: string;
           summary: string;
           categoryName?: string;
@@ -501,17 +503,41 @@ export async function executePipeline(runId: string): Promise<void> {
         { temperature: 0.4 }
       );
 
-      const digestHighlights = (digestResult.highlights || []).map((h) => {
-        const matchingArticle = publishedArticles.find(
-          (a) =>
-            a.title.toLowerCase().includes((h.title || "").toLowerCase().slice(0, 20)) ||
-            (h.title || "").toLowerCase().includes(a.title.toLowerCase().slice(0, 20))
-        );
+      const digestHighlights = (digestResult.highlights || []).map((h, idx) => {
+        // Strategy 1: Match by explicit articleSlug
+        let match = publishedArticles.find((a) => a.slug === h.articleSlug);
+
+        // Strategy 2: Match by articleIndex (1-indexed)
+        if (!match && typeof h.articleIndex === "number" && publishedArticles[h.articleIndex - 1]) {
+          match = publishedArticles[h.articleIndex - 1];
+        }
+
+        // Strategy 3: Keyword overlap matching
+        if (!match && h.title) {
+          const hWords = h.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+          let bestScore = 0;
+          let bestArticle: (typeof publishedArticles)[0] | undefined = undefined;
+          for (const a of publishedArticles) {
+            const aTitleLower = a.title.toLowerCase();
+            const score = hWords.filter((w) => aTitleLower.includes(w)).length;
+            if (score > bestScore) {
+              bestScore = score;
+              bestArticle = a;
+            }
+          }
+          if (bestScore >= 1 && bestArticle) match = bestArticle;
+        }
+
+        // Strategy 4: Fallback to position index
+        if (!match) {
+          match = publishedArticles[idx % publishedArticles.length];
+        }
+
         return {
-          title: h.title || "Story Highlight",
-          summary: h.summary || "",
-          articleSlug: matchingArticle?.slug || "",
-          categoryName: h.categoryName || matchingArticle?.categoryName || "General",
+          title: h.title || match?.title || "Story Highlight",
+          summary: h.summary || match?.excerpt || "",
+          articleSlug: match?.slug || publishedArticles[0]?.slug || "",
+          categoryName: h.categoryName || match?.categoryName || "General",
         };
       });
 

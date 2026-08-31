@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getDigestBySlug } from "@/lib/db";
+import { getDigestBySlug, getPublishedArticles } from "@/lib/db";
 import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
 import type { Metadata } from "next";
+import type { Article } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,13 @@ export default async function DigestPage({ params }: Props) {
   const { slug } = await params;
   const digest = await getDigestBySlug(slug);
   if (!digest) notFound();
+
+  let allArticles: Article[] = [];
+  try {
+    allArticles = await getPublishedArticles(60);
+  } catch {
+    // ignore
+  }
 
   const date = new Date(digest.publishedAt);
   const dateStr = date.toLocaleDateString("en-US", {
@@ -83,32 +91,56 @@ export default async function DigestPage({ params }: Props) {
               Stories in This Digest
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {digest.highlights.map((h, i) => (
-                <div
-                  key={i}
-                  className="card"
-                  style={{
-                    padding: "1.25rem",
-                    borderLeft: "3px solid var(--color-accent)",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                    <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--color-accent)", minWidth: "1.5rem" }}>
-                      {i + 1}.
-                    </span>
-                    {h.categoryName && (
-                      <span className="badge" style={{ fontSize: "0.7rem" }}>{h.categoryName}</span>
-                    )}
-                  </div>
-                  <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.4rem" }}>
-                    {h.title}
-                  </h3>
-                  <p style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
-                    {h.summary}
-                  </p>
-                  {h.articleSlug && (
+              {digest.highlights.map((h, i) => {
+                // Find matching article slug with multi-layer fallback
+                let targetSlug = h.articleSlug;
+                if (!targetSlug) {
+                  const hWords = h.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+                  let bestScore = 0;
+                  let bestArticle: Article | null = null;
+                  for (const a of allArticles) {
+                    const aTitleLower = a.title.toLowerCase();
+                    const score = hWords.filter((w) => aTitleLower.includes(w)).length;
+                    if (score > bestScore) {
+                      bestScore = score;
+                      bestArticle = a;
+                    }
+                  }
+                  if (bestArticle) {
+                    targetSlug = bestArticle.slug;
+                  } else if (digest.articleIds && digest.articleIds[i]) {
+                    const byId = allArticles.find((a) => a.id === digest.articleIds[i]);
+                    if (byId) targetSlug = byId.slug;
+                  } else if (allArticles[i]) {
+                    targetSlug = allArticles[i].slug;
+                  }
+                }
+
+                return (
+                  <div
+                    key={i}
+                    className="card"
+                    style={{
+                      padding: "1.25rem",
+                      borderLeft: "3px solid var(--color-accent)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                      <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--color-accent)", minWidth: "1.5rem" }}>
+                        {i + 1}.
+                      </span>
+                      {h.categoryName && (
+                        <span className="badge" style={{ fontSize: "0.7rem" }}>{h.categoryName}</span>
+                      )}
+                    </div>
+                    <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.4rem" }}>
+                      {h.title}
+                    </h3>
+                    <p style={{ fontSize: "0.9rem", color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+                      {h.summary}
+                    </p>
                     <Link
-                      href={`/articles/${h.articleSlug}`}
+                      href={targetSlug ? `/articles/${targetSlug}` : "/categories"}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -122,9 +154,9 @@ export default async function DigestPage({ params }: Props) {
                     >
                       Read full article <ArrowRight size={13} />
                     </Link>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

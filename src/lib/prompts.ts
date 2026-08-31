@@ -134,6 +134,8 @@ Respond in JSON format:
   "summary": "Executive summary of today's key developments...",
   "highlights": [
     {
+      "articleIndex": 1,
+      "articleSlug": "article-slug-from-input",
       "title": "Highlight headline",
       "summary": "Concise 2-3 sentence summary of this story and its significance",
       "categoryName": "Category Name"
