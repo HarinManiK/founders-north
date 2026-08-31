@@ -472,6 +472,32 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+function PublishBadge({ status }: { status?: string }) {
+  if (status === "draft") {
+    return (
+      <span className="badge" style={{ fontSize: "0.7rem", color: "var(--color-text-tertiary)" }}>
+        Draft
+      </span>
+    );
+  }
+  return (
+    <span
+      className="badge-success"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.25rem",
+        fontSize: "0.7rem",
+        padding: "0.15rem 0.5rem",
+        borderRadius: "9999px",
+        fontWeight: 600,
+      }}
+    >
+      <CheckCircle size={10} /> Published
+    </span>
+  );
+}
+
 // ============================================================================
 // Settings Tab
 // ============================================================================
@@ -843,7 +869,7 @@ function ArticlesTab() {
               <div style={{ flex: 1, minWidth: "200px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem", flexWrap: "wrap" }}>
                   <span className="badge" style={{ fontSize: "0.7rem" }}>{article.categoryName}</span>
-                  <StatusBadge status={article.status} />
+                  <PublishBadge status={article.status} />
                 </div>
                 <h4 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.2rem" }}>{article.title}</h4>
                 <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
@@ -851,11 +877,8 @@ function ArticlesTab() {
                 </p>
               </div>
               <div style={{ display: "flex", gap: "0.4rem" }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => startEdit(article)} title="Edit">
+                <button className="btn btn-ghost btn-sm" onClick={() => startEdit(article)} title="Edit Article">
                   <Edit3 size={14} />
-                </button>
-                <button className="btn btn-ghost btn-sm" onClick={() => toggleStatus(article)} title={article.status === "published" ? "Unpublish" : "Publish"}>
-                  {article.status === "published" ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
                 <button className="btn btn-ghost btn-sm" onClick={() => deleteArticle(article.id)} title="Delete" style={{ color: "var(--color-error)" }}>
                   <Trash2 size={14} />
@@ -967,7 +990,7 @@ function DigestsTab() {
             <div key={digest.id} className="card" style={{ padding: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
-                  <StatusBadge status={digest.status} />
+                  <PublishBadge status={digest.status} />
                 </div>
                 <h4 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.2rem" }}>{digest.title}</h4>
                 <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>

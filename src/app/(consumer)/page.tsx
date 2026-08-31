@@ -10,13 +10,21 @@ export default async function HomePage() {
   let recentArticles: Awaited<ReturnType<typeof getPublishedArticles>> = [];
 
   try {
-    [latestDigest, topArticles, recentArticles] = await Promise.all([
-      getLatestDigest(),
-      getTopArticles(7, 5),
-      getPublishedArticles(10),
-    ]);
-  } catch {
-    // Firestore not configured yet - show empty state
+    latestDigest = await getLatestDigest();
+  } catch (err) {
+    console.error("Failed to load latest digest:", err);
+  }
+
+  try {
+    topArticles = await getTopArticles(7, 5);
+  } catch (err) {
+    console.error("Failed to load top articles:", err);
+  }
+
+  try {
+    recentArticles = await getPublishedArticles(5);
+  } catch (err) {
+    console.error("Failed to load recent articles:", err);
   }
 
   const hasContent = latestDigest || topArticles.length > 0 || recentArticles.length > 0;
@@ -146,7 +154,7 @@ function ArticleCard({ article }: { article: { slug: string; title: string; exce
             <Clock size={13} /> {article.readTimeMinutes} min
           </span>
           <span>{dateStr}</span>
-          {article.sourceUrls.length > 0 && (
+          {article.sourceUrls && article.sourceUrls.length > 0 && (
             <span>{article.sourceUrls.length} sources</span>
           )}
         </div>

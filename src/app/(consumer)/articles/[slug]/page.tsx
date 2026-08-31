@@ -44,8 +44,8 @@ export default async function ArticlePage({ params }: Props) {
     // ignore
   }
 
-  const webSources = article.sourceUrls.filter((s) => s.url);
-  const newsletterSources = article.sourceUrls.filter((s) => s.newsletterName);
+  const webSources = (article.sourceUrls || []).filter((s) => s.url);
+  const newsletterSources = (article.sourceUrls || []).filter((s) => s.newsletterName);
 
   return (
     <div className="animate-fade-in" style={{ padding: "2rem 0 3rem" }}>

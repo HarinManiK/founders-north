@@ -88,58 +88,57 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
 }
 
 export async function getPublishedArticles(
-  limit = 20,
-  startAfterDate?: string
-): Promise<Article[]> {
-  const db = getDb();
-  let query = db
-    .collection("articles")
-    .where("status", "==", "published")
-    .orderBy("publishedAt", "desc")
-    .limit(limit);
-
-  if (startAfterDate) {
-    query = query.startAfter(startAfterDate);
-  }
-
-  const snap = await query.get();
-  return snap.docs.map((d) => d.data() as Article);
-}
-
-export async function getTopArticles(
-  sinceDaysAgo: number,
-  limit = 5
-): Promise<Article[]> {
-  const db = getDb();
-  const since = new Date(Date.now() - sinceDaysAgo * 24 * 60 * 60 * 1000).toISOString();
-
-  const snap = await db
-    .collection("articles")
-    .where("status", "==", "published")
-    .where("publishedAt", ">=", since)
-    .orderBy("publishedAt", "desc")
-    .get();
-
-  // Sort by importanceScore in-memory since composite index may not cover this
-  const articles = snap.docs.map((d) => d.data() as Article);
-  articles.sort((a, b) => b.importanceScore - a.importanceScore);
-  return articles.slice(0, limit);
-}
-
-export async function getArticlesByCategory(
-  categoryId: string,
   limit = 20
 ): Promise<Article[]> {
   const db = getDb();
   const snap = await db
     .collection("articles")
-    .where("status", "==", "published")
-    .where("categoryId", "==", categoryId)
-    .orderBy("publishedAt", "desc")
-    .limit(limit)
+    .orderBy("createdAt", "desc")
+    .limit(limit * 2)
     .get();
 
-  return snap.docs.map((d) => d.data() as Article);
+  const articles = snap.docs
+    .map((d) => d.data() as Article)
+    .filter((a) => a.status === "published");
+
+  return articles.slice(0, limit);
+}
+
+export async function getTopArticles(
+  sinceDaysAgo = 7,
+  limit = 5
+): Promise<Article[]> {
+  const all = await getPublishedArticles(50);
+  const cutoff = Date.now() - sinceDaysAgo * 24 * 60 * 60 * 1000;
+  const recent = all.filter((a) => new Date(a.createdAt || a.publishedAt).getTime() >= cutoff);
+  const candidateList = recent.length > 0 ? recent : all;
+  const sorted = [...candidateList].sort(
+    (a, b) => (b.importanceScore || 5) - (a.importanceScore || 5)
+  );
+  return sorted.slice(0, limit);
+}
+
+export async function getArticlesByCategory(
+  categoryId: string,
+  limit = 50
+): Promise<Article[]> {
+  const db = getDb();
+  const snap = await db
+    .collection("articles")
+    .where("categoryId", "==", categoryId)
+    .limit(limit * 2)
+    .get();
+
+  const articles = snap.docs
+    .map((d) => d.data() as Article)
+    .filter((a) => a.status === "published");
+
+  articles.sort(
+    (a, b) =>
+      new Date(b.publishedAt || b.createdAt).getTime() -
+      new Date(a.publishedAt || a.createdAt).getTime()
+  );
+  return articles.slice(0, limit);
 }
 
 export async function getAllArticles(limit = 50): Promise<Article[]> {
@@ -198,22 +197,16 @@ export async function getDigestBySlug(slug: string): Promise<DailyDigest | null>
 }
 
 export async function getLatestDigest(): Promise<DailyDigest | null> {
-  const db = getDb();
-  const snap = await db
-    .collection("digests")
-    .where("status", "==", "published")
-    .orderBy("date", "desc")
-    .limit(1)
-    .get();
-
-  return snap.empty ? null : (snap.docs[0].data() as DailyDigest);
+  const all = await getAllDigests(10);
+  const published = all.filter((d) => d.status === "published");
+  return published.length > 0 ? published[0] : null;
 }
 
 export async function getAllDigests(limit = 30): Promise<DailyDigest[]> {
   const db = getDb();
   const snap = await db
     .collection("digests")
-    .orderBy("date", "desc")
+    .orderBy("createdAt", "desc")
     .limit(limit)
     .get();
 
@@ -238,12 +231,28 @@ export async function getCategories(): Promise<Category[]> {
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
   const db = getDb();
+  // 1. Try slug match
   const snap = await db
     .collection("categories")
     .where("slug", "==", slug)
     .limit(1)
     .get();
-  return snap.empty ? null : (snap.docs[0].data() as Category);
+  if (!snap.empty) return snap.docs[0].data() as Category;
+
+  // 2. Try doc ID match
+  const doc = await db.collection("categories").doc(slug).get();
+  if (doc.exists) return doc.data() as Category;
+
+  // 3. In-memory fallback
+  const all = await getCategories();
+  return (
+    all.find(
+      (c) =>
+        c.slug === slug ||
+        c.id === slug ||
+        c.name.toLowerCase() === slug.toLowerCase()
+    ) || null
+  );
 }
 
 export async function createCategory(
