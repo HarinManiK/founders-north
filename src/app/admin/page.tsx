@@ -759,16 +759,6 @@ function SettingsTab() {
           </span>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
-          <div>
-            <label className="label">Host</label>
-            <input className="input" value={settings.imap.host} onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, host: e.target.value } })} />
-          </div>
-          <div>
-            <label className="label">Port</label>
-            <input className="input" type="number" value={settings.imap.port} onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, port: parseInt(e.target.value) || 993 } })} />
-          </div>
-        </div>
         <div style={{ marginBottom: "0.75rem" }}>
           <label className="label">Email Address</label>
           <input className="input" type="email" value={settings.imap.user} onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, user: e.target.value } })} placeholder="your@gmail.com" />
