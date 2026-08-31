@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Founders North - AI-Powered News & Analysis",
+  title: "Founders North - Tech, Startup & Business Intelligence",
   description:
-    "Your daily briefing on startups, technology, and business. Curated and analyzed by AI from the best newsletters.",
+    "Daily briefings, in-depth analysis, and essential news for founders, operators, and business leaders.",
   icons: {
     icon: [
       { url: "/logo.png", type: "image/png" },

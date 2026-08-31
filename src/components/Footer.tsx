@@ -38,8 +38,8 @@ export default function Footer() {
                 lineHeight: 1.6,
               }}
             >
-              AI-powered news and analysis for founders, entrepreneurs, and
-              business leaders. Curated daily from the best newsletters.
+              Essential news and deep-dive analysis for founders, operators, and
+              business leaders. Curated daily from top industry sources.
             </p>
           </div>
 

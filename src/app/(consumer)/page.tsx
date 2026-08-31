@@ -83,7 +83,7 @@ export default async function HomePage() {
                 Founders North
               </h1>
               <p style={{ fontSize: "1rem", color: "var(--color-text-secondary)", maxWidth: "500px", margin: "0 auto" }}>
-                AI-powered news and analysis for founders, entrepreneurs, and business leaders. Your first daily digest will appear here once the pipeline runs.
+                Essential news and deep-dive analysis for founders, entrepreneurs, and business leaders. Your daily briefing will appear here once published.
               </p>
             </div>
           )}
