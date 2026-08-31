@@ -128,13 +128,25 @@ export async function executePipeline(runId: string): Promise<void> {
     log("info", `[AI Filter] Sending ${emails.length} parsed email contents (~${Math.round(totalChars / 1000)}KB text) to ${settings.openrouter.model || "google/gemini-3.5-flash-lite"}...`);
 
     let filterResult: {
-      filteredEmailUids: string[];
+      emailDecisions?: Array<{
+        uid: string;
+        subject?: string;
+        isNewsletter: boolean;
+        reason?: string;
+      }>;
+      filteredEmailUids?: string[];
       topics: ExtractedTopic[];
     };
 
     try {
       filterResult = await chatCompletionJSON<{
-        filteredEmailUids: string[];
+        emailDecisions?: Array<{
+          uid: string;
+          subject?: string;
+          isNewsletter: boolean;
+          reason?: string;
+        }>;
+        filteredEmailUids?: string[];
         topics: ExtractedTopic[];
       }>(
         settings.openrouter,
@@ -152,10 +164,29 @@ export async function executePipeline(runId: string): Promise<void> {
       throw filterErr;
     }
 
+    // Log decisions per email
+    if (filterResult.emailDecisions && filterResult.emailDecisions.length > 0) {
+      log("info", `[AI Filter] Evaluated ${filterResult.emailDecisions.length} emails:`);
+      filterResult.emailDecisions.forEach((d) => {
+        const matchingEmail = emails.find((e) => e.uid === d.uid);
+        const subj = d.subject || matchingEmail?.subject || "Email";
+        if (d.isNewsletter) {
+          log("success", `  ✓ ACCEPTED [Newsletter]: "${subj}" - ${d.reason || "Valid newsletter"}`);
+        } else {
+          log("info", `  ✗ FILTERED [Excluded]: "${subj}" - ${d.reason || "Non-newsletter"}`);
+        }
+      });
+    }
+
     const topics = filterResult.topics || [];
+    const acceptedCount =
+      filterResult.emailDecisions?.filter((d) => d.isNewsletter).length ||
+      filterResult.filteredEmailUids?.length ||
+      0;
+
     log(
       "success",
-      `[AI Filter] Identified ${topics.length} distinct news topics from ${filterResult.filteredEmailUids?.length || 0} recognized newsletters.`
+      `[AI Filter] Identified ${topics.length} distinct news topics from ${acceptedCount} recognized newsletters.`
     );
 
     topics.forEach((t, idx) => {

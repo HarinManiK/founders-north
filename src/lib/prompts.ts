@@ -21,7 +21,20 @@ IMPORTANT: Never use em dashes in your output. Use hyphens (-) or colons (:) ins
 
 Respond in JSON format:
 {
-  "filteredEmailUids": ["uid1", "uid2"],
+  "emailDecisions": [
+    {
+      "uid": "uid1",
+      "subject": "Email subject line",
+      "isNewsletter": true,
+      "reason": "Tech industry newsletter covering new developments"
+    },
+    {
+      "uid": "uid2",
+      "subject": "Your OTP code",
+      "isNewsletter": false,
+      "reason": "Transactional verification code"
+    }
+  ],
   "topics": [
     {
       "title": "Clear, descriptive headline for this topic",

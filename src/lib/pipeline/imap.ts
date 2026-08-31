@@ -112,6 +112,8 @@ export async function fetchRecentEmails(
 
           const { cleanText, links } = extractEmailTextAndLinks(rawText, rawHtml);
 
+          onLog(`  [Mail ${totalCount}] "${subject}" (From: ${sender.slice(0, 35)})`);
+
           newsletters.push({
             subject,
             sender,
