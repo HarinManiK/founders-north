@@ -1,0 +1,1000 @@
+"use client";
+
+import { useState, useEffect, useRef, useCallback } from "react";
+import { DEFAULT_PROMPTS, PROMPT_LABELS, type PromptKey } from "@/lib/prompts";
+import {
+  Play,
+  Settings,
+  FileText,
+  BookOpen,
+  FolderOpen,
+  LogOut,
+  Loader2,
+  RefreshCw,
+  Save,
+  RotateCcw,
+  Trash2,
+  Edit3,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Clock,
+} from "lucide-react";
+import type {
+  AppSettings,
+  Article,
+  DailyDigest,
+  Category,
+  PipelineRun,
+  RunLogMessage,
+} from "@/types";
+
+type Tab = "pipeline" | "settings" | "prompts" | "articles" | "digests" | "categories";
+
+export default function AdminPage() {
+  const [authed, setAuthed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/auth/check")
+      .then((r) => r.json())
+      .then((data) => {
+        setAuthed(data.authenticated);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const handleLogin = async () => {
+    setLoginError("");
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    if (res.ok) {
+      setAuthed(true);
+    } else {
+      setLoginError("Invalid password");
+    }
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setAuthed(false);
+    setPassword("");
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+        <Loader2 className="animate-spin" size={32} style={{ color: "var(--color-accent)" }} />
+      </div>
+    );
+  }
+
+  if (!authed) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", padding: "1rem" }}>
+        <div className="card animate-fade-in" style={{ maxWidth: "380px", width: "100%", padding: "2rem" }}>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "1.3rem", fontWeight: 800, marginBottom: "0.25rem" }}>
+            Founders North
+          </h1>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)", marginBottom: "1.5rem" }}>Admin Panel</p>
+          <div style={{ marginBottom: "1rem" }}>
+            <label className="label">Password</label>
+            <input
+              type="password"
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              placeholder="Enter admin password"
+              autoFocus
+            />
+          </div>
+          {loginError && (
+            <p style={{ fontSize: "0.85rem", color: "var(--color-error)", marginBottom: "0.75rem" }}>{loginError}</p>
+          )}
+          <button className="btn btn-primary" style={{ width: "100%" }} onClick={handleLogin}>
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <AdminDashboard onLogout={handleLogout} />;
+}
+
+// ============================================================================
+// Admin Dashboard
+// ============================================================================
+
+function AdminDashboard({ onLogout }: { onLogout: () => void }) {
+  const [activeTab, setActiveTab] = useState<Tab>("pipeline");
+
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "pipeline", label: "Pipeline", icon: <Play size={15} /> },
+    { id: "settings", label: "Settings", icon: <Settings size={15} /> },
+    { id: "prompts", label: "Prompts", icon: <FileText size={15} /> },
+    { id: "articles", label: "Articles", icon: <FileText size={15} /> },
+    { id: "digests", label: "Digests", icon: <BookOpen size={15} /> },
+    { id: "categories", label: "Categories", icon: <FolderOpen size={15} /> },
+  ];
+
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
+      {/* Header */}
+      <div style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-bg-card)", padding: "0 1.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "56px", maxWidth: "1200px", margin: "0 auto" }}>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "1.1rem", fontWeight: 800 }}>
+            Founders North <span style={{ fontWeight: 500, color: "var(--color-text-tertiary)", fontSize: "0.85rem" }}>Admin</span>
+          </h1>
+          <button className="btn btn-ghost btn-sm" onClick={onLogout} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <LogOut size={14} /> Logout
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-bg-card)", padding: "0 1.5rem" }}>
+        <div className="tab-list" style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`tab-item ${activeTab === tab.id ? "active" : ""}`}
+              onClick={() => setActiveTab(tab.id)}
+              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "1.5rem" }}>
+        {activeTab === "pipeline" && <PipelineTab />}
+        {activeTab === "settings" && <SettingsTab />}
+        {activeTab === "prompts" && <PromptsTab />}
+        {activeTab === "articles" && <ArticlesTab />}
+        {activeTab === "digests" && <DigestsTab />}
+        {activeTab === "categories" && <CategoriesTab />}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Pipeline Tab
+// ============================================================================
+
+function PipelineTab() {
+  const [running, setRunning] = useState(false);
+  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
+  const [currentRun, setCurrentRun] = useState<PipelineRun | null>(null);
+  const [recentRuns, setRecentRuns] = useState<PipelineRun[]>([]);
+  const consoleRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+  const loadRecentRuns = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/runs");
+      if (res.ok) {
+        const data = await res.json();
+        setRecentRuns(data);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    loadRecentRuns();
+  }, [loadRecentRuns]);
+
+  // Poll for run status
+  useEffect(() => {
+    if (!currentRunId) return;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/admin/runs?id=${currentRunId}`);
+        if (res.ok) {
+          const run = await res.json();
+          setCurrentRun(run);
+
+          if (run.status === "completed" || run.status === "failed") {
+            setRunning(false);
+            if (pollRef.current) clearInterval(pollRef.current);
+            loadRecentRuns();
+          }
+
+          // Auto-scroll console
+          if (consoleRef.current) {
+            consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+          }
+        }
+      } catch { /* ignore */ }
+    };
+
+    poll();
+    pollRef.current = setInterval(poll, 2000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [currentRunId, loadRecentRuns]);
+
+  const triggerRun = async () => {
+    setRunning(true);
+    setCurrentRun(null);
+    try {
+      const res = await fetch("/api/admin/pipeline/trigger", { method: "POST" });
+      const data = await res.json();
+      if (data.runId) {
+        setCurrentRunId(data.runId);
+      } else {
+        setRunning(false);
+        alert(data.error || "Failed to trigger pipeline");
+      }
+    } catch {
+      setRunning(false);
+      alert("Failed to trigger pipeline");
+    }
+  };
+
+  const stageLabels: Record<string, string> = {
+    queued: "Queued",
+    fetching_emails: "Fetching Emails",
+    filtering_topics: "Filtering & Extracting Topics",
+    scraping_sources: "Scraping Source URLs",
+    writing_articles: "Writing Articles",
+    categorizing: "Categorizing Articles",
+    compiling_digest: "Compiling Daily Digest",
+    publishing: "Publishing",
+    done: "Complete",
+    failed: "Failed",
+  };
+
+  return (
+    <div className="animate-fade-in">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
+        <div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Pipeline Runner</h2>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+            Trigger the AI pipeline to fetch emails, generate articles, and publish.
+          </p>
+        </div>
+        <button
+          className="btn btn-primary"
+          onClick={triggerRun}
+          disabled={running}
+          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+        >
+          {running ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} />}
+          {running ? "Running..." : "Run Pipeline"}
+        </button>
+      </div>
+
+      {/* Current Run Status */}
+      {currentRun && (
+        <div className="card" style={{ marginBottom: "1.5rem", padding: "1rem 1.25rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Status:</span>
+            <StatusBadge status={currentRun.status} />
+            <span style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
+              Stage: {stageLabels[currentRun.currentStage] || currentRun.currentStage}
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.8rem", color: "var(--color-text-tertiary)", flexWrap: "wrap" }}>
+            <span>Emails: {currentRun.emailsProcessed}</span>
+            <span>Topics: {currentRun.newslettersIdentified}</span>
+            <span>Articles: {currentRun.articlesGenerated}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Live Console */}
+      {currentRun && currentRun.logs && currentRun.logs.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+            <h3 style={{ fontSize: "0.85rem", fontWeight: 600 }}>Live Console</h3>
+            {running && (
+              <span style={{ fontSize: "0.75rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-success)" }} className="animate-pulse" />
+                Live
+              </span>
+            )}
+          </div>
+          <div className="admin-console" ref={consoleRef}>
+            {(currentRun.logs as RunLogMessage[]).map((log, i) => {
+              const time = new Date(log.timestamp).toLocaleTimeString();
+              return (
+                <div key={i} className={`log-${log.level}`} style={{ marginBottom: "0.2rem" }}>
+                  <span style={{ opacity: 0.5 }}>[{time}]</span> {log.message}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Runs */}
+      {recentRuns.length > 0 && (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+            <h3 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Recent Runs</h3>
+            <button className="btn btn-ghost btn-sm" onClick={loadRecentRuns}>
+              <RefreshCw size={13} />
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {recentRuns.slice(0, 10).map((run) => {
+              const start = new Date(run.startedAt);
+              const duration = run.completedAt
+                ? Math.round((new Date(run.completedAt).getTime() - start.getTime()) / 1000)
+                : null;
+
+              return (
+                <div
+                  key={run.id}
+                  className="card"
+                  style={{ padding: "0.75rem 1rem", cursor: "pointer" }}
+                  onClick={() => {
+                    setCurrentRunId(run.id);
+                    setCurrentRun(run);
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                      <StatusBadge status={run.status} />
+                      <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
+                        {start.toLocaleString()}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: "1rem", fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
+                      <span>{run.articlesGenerated} articles</span>
+                      {duration !== null && (
+                        <span style={{ display: "flex", alignItems: "center", gap: "0.2rem" }}>
+                          <Clock size={12} /> {duration}s
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const config: Record<string, { icon: React.ReactNode; className: string; label: string }> = {
+    queued: { icon: <Clock size={12} />, className: "badge-warning", label: "Queued" },
+    running: { icon: <Loader2 className="animate-spin" size={12} />, className: "badge-warning", label: "Running" },
+    completed: { icon: <CheckCircle size={12} />, className: "badge-success", label: "Completed" },
+    failed: { icon: <XCircle size={12} />, className: "badge-error", label: "Failed" },
+  };
+  const c = config[status] || config.queued;
+  return (
+    <span className={c.className} style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.2rem 0.6rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 600 }}>
+      {c.icon} {c.label}
+    </span>
+  );
+}
+
+// ============================================================================
+// Settings Tab
+// ============================================================================
+
+function SettingsTab() {
+  const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [showPass, setShowPass] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then(setSettings)
+      .catch(() => {});
+  }, []);
+
+  const save = async () => {
+    if (!settings) return;
+    setSaving(true);
+    setSaved(false);
+    try {
+      await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imap: settings.imap, openrouter: settings.openrouter }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      alert("Failed to save settings");
+    }
+    setSaving(false);
+  };
+
+  if (!settings) {
+    return <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}><Loader2 className="animate-spin" size={24} /></div>;
+  }
+
+  return (
+    <div className="animate-fade-in" style={{ maxWidth: "600px" }}>
+      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1.5rem" }}>Mailbox & API Settings</h2>
+
+      {/* IMAP Settings */}
+      <div className="card" style={{ marginBottom: "1.5rem", padding: "1.5rem" }}>
+        <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>IMAP Mailbox</h3>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", padding: "0.5rem 0.75rem", background: "var(--color-accent-light)", borderRadius: "8px", fontSize: "0.8rem" }}>
+          <AlertCircle size={14} style={{ color: "var(--color-accent)" }} />
+          <span style={{ color: "var(--color-text-secondary)" }}>
+            For Gmail, use an App Password:{" "}
+            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-accent)", fontWeight: 600 }}>
+              Get App Password <ExternalLink size={11} style={{ display: "inline", verticalAlign: "middle" }} />
+            </a>
+          </span>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
+          <div>
+            <label className="label">Host</label>
+            <input className="input" value={settings.imap.host} onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, host: e.target.value } })} />
+          </div>
+          <div>
+            <label className="label">Port</label>
+            <input className="input" type="number" value={settings.imap.port} onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, port: parseInt(e.target.value) || 993 } })} />
+          </div>
+        </div>
+        <div style={{ marginBottom: "0.75rem" }}>
+          <label className="label">Email Address</label>
+          <input className="input" type="email" value={settings.imap.user} onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, user: e.target.value } })} placeholder="your@gmail.com" />
+        </div>
+        <div>
+          <label className="label">App Password / IMAP Password</label>
+          <div style={{ position: "relative" }}>
+            <input
+              className="input"
+              type={showPass ? "text" : "password"}
+              value={settings.imap.pass}
+              onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, pass: e.target.value } })}
+              placeholder="xxxx xxxx xxxx xxxx"
+              style={{ paddingRight: "2.5rem" }}
+            />
+            <button
+              className="btn-ghost"
+              style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", padding: "0.25rem" }}
+              onClick={() => setShowPass(!showPass)}
+            >
+              {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* OpenRouter Settings */}
+      <div className="card" style={{ marginBottom: "1.5rem", padding: "1.5rem" }}>
+        <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>OpenRouter API</h3>
+        <div style={{ marginBottom: "0.75rem" }}>
+          <label className="label">API Key</label>
+          <div style={{ position: "relative" }}>
+            <input
+              className="input"
+              type={showApiKey ? "text" : "password"}
+              value={settings.openrouter.apiKey}
+              onChange={(e) => setSettings({ ...settings, openrouter: { ...settings.openrouter, apiKey: e.target.value } })}
+              placeholder="sk-or-v1-..."
+              style={{ paddingRight: "2.5rem" }}
+            />
+            <button
+              className="btn-ghost"
+              style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", padding: "0.25rem" }}
+              onClick={() => setShowApiKey(!showApiKey)}
+            >
+              {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+        <div>
+          <label className="label">Model</label>
+          <input
+            className="input"
+            value={settings.openrouter.model}
+            onChange={(e) => setSettings({ ...settings, openrouter: { ...settings.openrouter, model: e.target.value } })}
+            placeholder="google/gemini-3.5-flash-lite"
+          />
+        </div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <button className="btn btn-primary" onClick={save} disabled={saving} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+          {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+          Save Settings
+        </button>
+        {saved && (
+          <span style={{ fontSize: "0.85rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+            <CheckCircle size={14} /> Saved
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Prompts Tab
+// ============================================================================
+
+function PromptsTab() {
+  const [prompts, setPrompts] = useState<Record<PromptKey, string> | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((r) => r.json())
+      .then((s: AppSettings) => setPrompts(s.prompts))
+      .catch(() => setPrompts({ ...DEFAULT_PROMPTS }));
+  }, []);
+
+  const save = async () => {
+    if (!prompts) return;
+    setSaving(true);
+    setSaved(false);
+    try {
+      await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompts }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      alert("Failed to save prompts");
+    }
+    setSaving(false);
+  };
+
+  const resetPrompt = (key: PromptKey) => {
+    if (!prompts) return;
+    setPrompts({ ...prompts, [key]: DEFAULT_PROMPTS[key] });
+  };
+
+  if (!prompts) {
+    return <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}><Loader2 className="animate-spin" size={24} /></div>;
+  }
+
+  const keys: PromptKey[] = ["filterPrompt", "articlePrompt", "categoryPrompt", "digestPrompt"];
+
+  return (
+    <div className="animate-fade-in">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
+        <div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Prompt Studio</h2>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+            Customize the AI prompts for each pipeline stage.
+          </p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <button className="btn btn-primary" onClick={save} disabled={saving} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+            Save All Prompts
+          </button>
+          {saved && (
+            <span style={{ fontSize: "0.85rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+              <CheckCircle size={14} /> Saved
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        {keys.map((key) => (
+          <div key={key} className="card" style={{ padding: "1.25rem" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+              <h3 style={{ fontSize: "0.95rem", fontWeight: 700 }}>{PROMPT_LABELS[key]}</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => resetPrompt(key)} style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                <RotateCcw size={12} /> Reset to Default
+              </button>
+            </div>
+            <textarea
+              className="textarea"
+              value={prompts[key]}
+              onChange={(e) => setPrompts({ ...prompts, [key]: e.target.value })}
+              rows={12}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Articles Tab
+// ============================================================================
+
+function ArticlesTab() {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Article>>({});
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/articles");
+      if (res.ok) setArticles(await res.json());
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const startEdit = (article: Article) => {
+    setEditingId(article.id);
+    setEditForm({
+      title: article.title,
+      excerpt: article.excerpt,
+      content: article.content,
+      categoryName: article.categoryName,
+      status: article.status,
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    try {
+      await fetch(`/api/admin/articles/${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      setEditingId(null);
+      load();
+    } catch {
+      alert("Failed to save");
+    }
+  };
+
+  const deleteArticle = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this article?")) return;
+    try {
+      await fetch(`/api/admin/articles/${id}`, { method: "DELETE" });
+      load();
+    } catch {
+      alert("Failed to delete");
+    }
+  };
+
+  const toggleStatus = async (article: Article) => {
+    const newStatus = article.status === "published" ? "draft" : "published";
+    try {
+      await fetch(`/api/admin/articles/${article.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      load();
+    } catch {
+      alert("Failed to update");
+    }
+  };
+
+  if (loading) {
+    return <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}><Loader2 className="animate-spin" size={24} /></div>;
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+        <div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Articles ({articles.length})</h2>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>Manage, edit, and control published articles.</p>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={load}><RefreshCw size={13} /></button>
+      </div>
+
+      {/* Edit Modal */}
+      {editingId && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", justifyContent: "center", alignItems: "center", padding: "1rem" }}>
+          <div className="card animate-fade-in" style={{ maxWidth: "700px", width: "100%", maxHeight: "90vh", overflowY: "auto", padding: "1.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Edit Article</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div>
+                <label className="label">Title</label>
+                <input className="input" value={editForm.title || ""} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">Excerpt</label>
+                <textarea className="textarea" rows={2} value={editForm.excerpt || ""} onChange={(e) => setEditForm({ ...editForm, excerpt: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">Content (Markdown)</label>
+                <textarea className="textarea" rows={15} value={editForm.content || ""} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <div>
+                  <label className="label">Category</label>
+                  <input className="input" value={editForm.categoryName || ""} onChange={(e) => setEditForm({ ...editForm, categoryName: e.target.value })} />
+                </div>
+                <div>
+                  <label className="label">Status</label>
+                  <select className="input" value={editForm.status || "published"} onChange={(e) => setEditForm({ ...editForm, status: e.target.value as "published" | "draft" })}>
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1rem" }}>
+              <button className="btn btn-secondary" onClick={() => setEditingId(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={saveEdit}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {articles.length === 0 ? (
+        <div className="card" style={{ textAlign: "center", padding: "2rem" }}>
+          <p style={{ color: "var(--color-text-secondary)" }}>No articles yet. Run the pipeline to generate articles.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {articles.map((article) => (
+            <div key={article.id} className="card" style={{ padding: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: "200px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem", flexWrap: "wrap" }}>
+                  <span className="badge" style={{ fontSize: "0.7rem" }}>{article.categoryName}</span>
+                  <StatusBadge status={article.status} />
+                </div>
+                <h4 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.2rem" }}>{article.title}</h4>
+                <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
+                  {new Date(article.createdAt).toLocaleDateString()} - {article.readTimeMinutes} min read
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: "0.4rem" }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => startEdit(article)} title="Edit">
+                  <Edit3 size={14} />
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => toggleStatus(article)} title={article.status === "published" ? "Unpublish" : "Publish"}>
+                  {article.status === "published" ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => deleteArticle(article.id)} title="Delete" style={{ color: "var(--color-error)" }}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Digests Tab
+// ============================================================================
+
+function DigestsTab() {
+  const [digests, setDigests] = useState<DailyDigest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<DailyDigest>>({});
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/digests");
+      if (res.ok) setDigests(await res.json());
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const startEdit = (digest: DailyDigest) => {
+    setEditingId(digest.id);
+    setEditForm({ title: digest.title, summary: digest.summary, status: digest.status });
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    try {
+      await fetch(`/api/admin/digests/${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      setEditingId(null);
+      load();
+    } catch {
+      alert("Failed to save");
+    }
+  };
+
+  if (loading) {
+    return <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}><Loader2 className="animate-spin" size={24} /></div>;
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+        <div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Daily Digests ({digests.length})</h2>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>View and edit daily briefings.</p>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={load}><RefreshCw size={13} /></button>
+      </div>
+
+      {/* Edit Modal */}
+      {editingId && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", justifyContent: "center", alignItems: "center", padding: "1rem" }}>
+          <div className="card animate-fade-in" style={{ maxWidth: "600px", width: "100%", maxHeight: "90vh", overflowY: "auto", padding: "1.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Edit Digest</h3>
+              <button className="btn btn-ghost btn-sm" onClick={() => setEditingId(null)}>Cancel</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <div>
+                <label className="label">Title</label>
+                <input className="input" value={editForm.title || ""} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">Summary</label>
+                <textarea className="textarea" rows={8} value={editForm.summary || ""} onChange={(e) => setEditForm({ ...editForm, summary: e.target.value })} />
+              </div>
+              <div>
+                <label className="label">Status</label>
+                <select className="input" value={editForm.status || "published"} onChange={(e) => setEditForm({ ...editForm, status: e.target.value as "published" | "draft" })}>
+                  <option value="published">Published</option>
+                  <option value="draft">Draft</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1rem" }}>
+              <button className="btn btn-secondary" onClick={() => setEditingId(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={saveEdit}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {digests.length === 0 ? (
+        <div className="card" style={{ textAlign: "center", padding: "2rem" }}>
+          <p style={{ color: "var(--color-text-secondary)" }}>No digests yet. Run the pipeline to generate your first daily digest.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {digests.map((digest) => (
+            <div key={digest.id} className="card" style={{ padding: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
+                  <StatusBadge status={digest.status} />
+                </div>
+                <h4 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.2rem" }}>{digest.title}</h4>
+                <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
+                  {digest.date} - {digest.highlights?.length || 0} stories
+                </p>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => startEdit(digest)}>
+                <Edit3 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// Categories Tab
+// ============================================================================
+
+function CategoriesTab() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [newName, setNewName] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/categories");
+      if (res.ok) setCategories(await res.json());
+    } catch { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const addCategory = async () => {
+    if (!newName.trim()) return;
+    try {
+      await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", name: newName.trim() }),
+      });
+      setNewName("");
+      load();
+    } catch {
+      alert("Failed to create category");
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    if (!confirm("Delete this category? Articles in it won't be deleted but will lose their category.")) return;
+    try {
+      await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", id }),
+      });
+      load();
+    } catch {
+      alert("Failed to delete category");
+    }
+  };
+
+  if (loading) {
+    return <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}><Loader2 className="animate-spin" size={24} /></div>;
+  }
+
+  return (
+    <div className="animate-fade-in" style={{ maxWidth: "600px" }}>
+      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1.5rem" }}>Categories ({categories.length})</h2>
+
+      {/* Add Category */}
+      <div className="card" style={{ padding: "1rem", marginBottom: "1.5rem", display: "flex", gap: "0.5rem" }}>
+        <input
+          className="input"
+          placeholder="New category name..."
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addCategory()}
+        />
+        <button className="btn btn-primary btn-sm" onClick={addCategory}>Add</button>
+      </div>
+
+      {categories.length === 0 ? (
+        <div className="card" style={{ textAlign: "center", padding: "2rem" }}>
+          <p style={{ color: "var(--color-text-secondary)" }}>No categories yet. They will be auto-created by the pipeline.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {categories.map((cat) => (
+            <div key={cat.id} className="card" style={{ padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <h4 style={{ fontSize: "0.9rem", fontWeight: 600 }}>{cat.name}</h4>
+                <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
+                  {cat.articleCount} articles - /{cat.slug}
+                </p>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => deleteCategory(cat.id)} style={{ color: "var(--color-error)" }}>
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

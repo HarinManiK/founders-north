@@ -110,6 +110,7 @@ export interface PipelineRun {
   newslettersIdentified: number;
   articlesGenerated: number;
   digestId?: string;
+  logs?: RunLogMessage[];
   error?: string;
 }
 

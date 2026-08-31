@@ -65,7 +65,11 @@ export async function fetchRecentEmails(
         }
 
         try {
-          const parsed: ParsedMail = await simpleParser(msg.source);
+          if (!msg.source) {
+            onLog(`Warning: No source content for email UID ${uid}, skipping`);
+            continue;
+          }
+          const parsed = await simpleParser(msg.source);
 
           const sender =
             parsed.from?.text ||
