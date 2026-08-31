@@ -130,7 +130,8 @@ export interface ExtractedNewsletter {
   subject: string;
   sender: string;
   bodyText: string;
-  bodyHtml: string;
+  cleanText: string;
+  links: string[];
   receivedAt: string;
   messageId: string;
   uid: string;

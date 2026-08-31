@@ -104,15 +104,15 @@ export async function executePipeline(runId: string): Promise<void> {
     await updateRunStatus(runId, "running", "filtering_topics");
     log("info", `Stage 2: Filtering ${emails.length} emails and extracting topics...`);
 
-    // Prepare email summaries for the AI
+    // Prepare clean email summaries for the AI
     const emailSummaries = emails.map((e, i) => ({
-      index: i,
+      index: i + 1,
       uid: e.uid,
       sender: e.sender,
       subject: e.subject,
       receivedAt: e.receivedAt,
-      bodyPreview: e.bodyText.slice(0, 3000) || "(HTML only)",
-      bodyHtml: e.bodyHtml ? e.bodyHtml.slice(0, 5000) : "",
+      content: (e.cleanText || e.bodyText || "").slice(0, 4000),
+      links: e.links.slice(0, 8),
     }));
 
     const filterResult = await chatCompletionJSON<{
@@ -124,7 +124,7 @@ export async function executePipeline(runId: string): Promise<void> {
         { role: "system", content: settings.prompts.filterPrompt },
         {
           role: "user",
-          content: `Here are ${emails.length} emails from the last 24 hours. Analyze them and extract newsletter topics.\n\n${JSON.stringify(emailSummaries, null, 2)}`,
+          content: `Here are ${emails.length} emails received in the last 24 hours. Analyze all of them thoroughly and extract all newsletter stories and topics.\n\n${JSON.stringify(emailSummaries, null, 2)}`,
         },
       ],
       { temperature: 0.3 }
