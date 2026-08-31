@@ -36,5 +36,6 @@ function getFirebaseApp(): App {
 export function getDb(): Firestore {
   if (db) return db;
   db = getFirestore(getFirebaseApp());
+  db.settings({ ignoreUndefinedProperties: true });
   return db;
 }

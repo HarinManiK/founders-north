@@ -420,14 +420,14 @@ export async function executePipeline(runId: string): Promise<void> {
     const digestHighlights = (digestResult.highlights || []).map((h) => {
       const matchingArticle = publishedArticles.find(
         (a) =>
-          a.title.toLowerCase().includes(h.title.toLowerCase().slice(0, 20)) ||
-          h.title.toLowerCase().includes(a.title.toLowerCase().slice(0, 20))
+          a.title.toLowerCase().includes((h.title || "").toLowerCase().slice(0, 20)) ||
+          (h.title || "").toLowerCase().includes(a.title.toLowerCase().slice(0, 20))
       );
       return {
-        title: h.title,
-        summary: h.summary,
-        articleSlug: matchingArticle?.slug,
-        categoryName: h.categoryName || matchingArticle?.categoryName,
+        title: h.title || "Story Highlight",
+        summary: h.summary || "",
+        articleSlug: matchingArticle?.slug || "",
+        categoryName: h.categoryName || matchingArticle?.categoryName || "General",
       };
     });
 
