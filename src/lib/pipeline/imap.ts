@@ -13,7 +13,6 @@ import { twentyFourHoursAgoIST } from "@/lib/timezone";
  */
 export async function fetchRecentEmails(
   config: MailboxConfig,
-  processedUids: Set<string>,
   onLog: (msg: string) => void
 ): Promise<ExtractedNewsletter[]> {
   const client = new ImapFlow({
@@ -52,17 +51,10 @@ export async function fetchRecentEmails(
       );
 
       let totalCount = 0;
-      let skippedCount = 0;
 
       for await (const msg of messages) {
         totalCount++;
         const uid = String(msg.uid);
-
-        // Skip already-processed emails
-        if (processedUids.has(uid)) {
-          skippedCount++;
-          continue;
-        }
 
         try {
           if (!msg.source) {
@@ -94,7 +86,7 @@ export async function fetchRecentEmails(
       }
 
       onLog(
-        `Found ${totalCount} emails, skipped ${skippedCount} already processed, ${newsletters.length} new candidates`
+        `Found ${totalCount} emails from last 24 hours, parsed ${newsletters.length} emails for analysis`
       );
     } finally {
       lock.release();

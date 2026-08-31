@@ -19,8 +19,6 @@ import { scrapeUrls } from "./scraper";
 import { chatCompletionJSON, chatCompletion } from "@/lib/openrouter";
 import {
   getSettings,
-  getProcessedEmailUids,
-  markEmailProcessed,
   createArticle,
   createDigest,
   getCategories,
@@ -80,10 +78,8 @@ export async function executePipeline(runId: string): Promise<void> {
     await updateRunStatus(runId, "running", "fetching_emails");
     log("info", "Stage 1: Fetching emails from IMAP...");
 
-    const processedUids = await getProcessedEmailUids();
     const emails = await fetchRecentEmails(
       settings.imap,
-      processedUids,
       (msg) => log("info", msg)
     );
 
@@ -142,18 +138,6 @@ export async function executePipeline(runId: string): Promise<void> {
 
     if (topics.length === 0) {
       log("warn", "No newsletter topics identified after filtering");
-      // Mark all emails as processed anyway
-      for (const email of emails) {
-        await markEmailProcessed({
-          uid: email.uid,
-          messageId: email.messageId,
-          subject: email.subject,
-          sender: email.sender,
-          receivedAt: email.receivedAt,
-          processedAt: new Date().toISOString(),
-          runId,
-        });
-      }
       await updateRunStatus(runId, "completed", "done", {
         completedAt: new Date().toISOString(),
         newslettersIdentified: 0,
@@ -362,19 +346,6 @@ export async function executePipeline(runId: string): Promise<void> {
       }
 
       log("success", `Published: "${item.article.title}"`);
-    }
-
-    // Mark emails as processed
-    for (const email of emails) {
-      await markEmailProcessed({
-        uid: email.uid,
-        messageId: email.messageId,
-        subject: email.subject,
-        sender: email.sender,
-        receivedAt: email.receivedAt,
-        processedAt: new Date().toISOString(),
-        runId,
-      });
     }
 
     // ================================================================
