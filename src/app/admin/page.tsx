@@ -123,7 +123,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [pipelineResetKey, setPipelineResetKey] = useState(0);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "pipeline", label: "Pipeline", icon: <Play size={15} /> },
+    { id: "pipeline", label: "Runs", icon: <Play size={15} /> },
     { id: "settings", label: "Settings", icon: <Settings size={15} /> },
     { id: "prompts", label: "Prompts", icon: <FileText size={15} /> },
     { id: "articles", label: "Articles", icon: <BookOpen size={15} /> },
@@ -350,7 +350,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
               }}
               style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem", paddingLeft: 0 }}
             >
-              <ArrowLeft size={15} /> Back to All Runs
+              <ArrowLeft size={15} /> Back to Runs
             </button>
             <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
               Run Details: <span style={{ fontFamily: "monospace", fontSize: "1.05rem", fontWeight: 500, color: "var(--color-text-secondary)" }}>{selectedRunId}</span>
@@ -562,7 +562,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
     <div className="animate-fade-in">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
         <div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Pipeline Runs</h2>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Runs</h2>
           <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
             Trigger new AI pipelines and inspect past execution logs.
           </p>
