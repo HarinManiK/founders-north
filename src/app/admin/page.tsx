@@ -22,6 +22,8 @@ import {
   XCircle,
   AlertCircle,
   Clock,
+  ArrowLeft,
+  ChevronRight,
 } from "lucide-react";
 import type {
   AppSettings,
@@ -118,15 +120,24 @@ export default function AdminPage() {
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState<Tab>("pipeline");
+  const [pipelineResetKey, setPipelineResetKey] = useState(0);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "pipeline", label: "Pipeline", icon: <Play size={15} /> },
     { id: "settings", label: "Settings", icon: <Settings size={15} /> },
     { id: "prompts", label: "Prompts", icon: <FileText size={15} /> },
-    { id: "articles", label: "Articles", icon: <FileText size={15} /> },
-    { id: "digests", label: "Digests", icon: <BookOpen size={15} /> },
+    { id: "articles", label: "Articles", icon: <BookOpen size={15} /> },
+    { id: "digests", label: "Daily Digests", icon: <BookOpen size={15} /> },
     { id: "categories", label: "Categories", icon: <FolderOpen size={15} /> },
   ];
+
+  const handleTabClick = (tabId: Tab) => {
+    if (tabId === "pipeline") {
+      // Reset PipelineTab back to the list of runs
+      setPipelineResetKey((k) => k + 1);
+    }
+    setActiveTab(tabId);
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
@@ -149,7 +160,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <button
               key={tab.id}
               className={`tab-item ${activeTab === tab.id ? "active" : ""}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
             >
               {tab.icon}
@@ -161,7 +172,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
       {/* Content */}
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "1.5rem" }}>
-        {activeTab === "pipeline" && <PipelineTab />}
+        {activeTab === "pipeline" && <PipelineTab resetKey={pipelineResetKey} />}
         {activeTab === "settings" && <SettingsTab />}
         {activeTab === "prompts" && <PromptsTab />}
         {activeTab === "articles" && <ArticlesTab />}
@@ -176,78 +187,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 // Pipeline Tab
 // ============================================================================
 
-function PipelineTab() {
-  const [running, setRunning] = useState(false);
-  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
-  const [currentRun, setCurrentRun] = useState<PipelineRun | null>(null);
+function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [selectedRun, setSelectedRun] = useState<PipelineRun | null>(null);
   const [recentRuns, setRecentRuns] = useState<PipelineRun[]>([]);
+  const [activeRunningRun, setActiveRunningRun] = useState<PipelineRun | null>(null);
+  const [triggering, setTriggering] = useState(false);
+  const [stopping, setStopping] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   const consoleRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
-
-  const loadRecentRuns = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/runs");
-      if (res.ok) {
-        const data = await res.json();
-        setRecentRuns(data);
-      }
-    } catch { /* ignore */ }
-  }, []);
-
-  useEffect(() => {
-    loadRecentRuns();
-  }, [loadRecentRuns]);
-
-  // Poll for run status
-  useEffect(() => {
-    if (!currentRunId) return;
-
-    const poll = async () => {
-      try {
-        const res = await fetch(`/api/admin/runs?id=${currentRunId}`);
-        if (res.ok) {
-          const run = await res.json();
-          setCurrentRun(run);
-
-          if (run.status === "completed" || run.status === "failed") {
-            setRunning(false);
-            if (pollRef.current) clearInterval(pollRef.current);
-            loadRecentRuns();
-          }
-
-          // Auto-scroll console
-          if (consoleRef.current) {
-            consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
-          }
-        }
-      } catch { /* ignore */ }
-    };
-
-    poll();
-    pollRef.current = setInterval(poll, 2000);
-
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, [currentRunId, loadRecentRuns]);
-
-  const triggerRun = async () => {
-    setRunning(true);
-    setCurrentRun(null);
-    try {
-      const res = await fetch("/api/admin/pipeline/trigger", { method: "POST" });
-      const data = await res.json();
-      if (data.runId) {
-        setCurrentRunId(data.runId);
-      } else {
-        setRunning(false);
-        alert(data.error || "Failed to trigger pipeline");
-      }
-    } catch {
-      setRunning(false);
-      alert("Failed to trigger pipeline");
-    }
-  };
 
   const stageLabels: Record<string, string> = {
     queued: "Queued",
@@ -263,35 +213,116 @@ function PipelineTab() {
     cancelled: "Stopped & Rolled Back",
   };
 
-  const [copied, setCopied] = useState(false);
-  const [stopping, setStopping] = useState(false);
+  // Reset to list view when resetKey changes (user clicks Pipeline tab at top left)
+  useEffect(() => {
+    setSelectedRunId(null);
+    setSelectedRun(null);
+  }, [resetKey]);
 
-  const stopRun = async () => {
-    if (!currentRunId) return;
+  // Load all runs and identify active running ones
+  const loadRuns = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/runs");
+      if (res.ok) {
+        const data: PipelineRun[] = await res.json();
+        setRecentRuns(data);
+        const active = data.find((r) => r.status === "running" || r.status === "queued") || null;
+        setActiveRunningRun(active);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRuns();
+  }, [loadRuns]);
+
+  // Polling for selected run or active run
+  useEffect(() => {
+    const targetId = selectedRunId || activeRunningRun?.id;
+    if (!targetId) return;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/admin/runs?id=${targetId}`);
+        if (res.ok) {
+          const run: PipelineRun = await res.json();
+          if (selectedRunId === targetId) {
+            setSelectedRun(run);
+          }
+          if (run.status === "completed" || run.status === "failed" || run.status === "cancelled") {
+            loadRuns();
+          } else {
+            setActiveRunningRun(run);
+          }
+
+          if (consoleRef.current) {
+            consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    poll();
+    pollRef.current = setInterval(poll, 2000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [selectedRunId, activeRunningRun?.id, loadRuns]);
+
+  // Trigger a new run
+  const triggerRun = async () => {
+    setTriggering(true);
+    try {
+      const res = await fetch("/api/admin/pipeline/trigger", { method: "POST" });
+      const data = await res.json();
+      if (data.runId) {
+        setSelectedRunId(data.runId);
+        setSelectedRun(null);
+        loadRuns();
+      } else {
+        alert(data.error || "Failed to trigger pipeline");
+      }
+    } catch {
+      alert("Failed to trigger pipeline");
+    } finally {
+      setTriggering(false);
+    }
+  };
+
+  // Stop a run and initiate immediate rollback
+  const stopRun = async (runIdToStop: string) => {
     if (!confirm("Are you sure you want to stop this run immediately and undo any created articles/digests?")) return;
     setStopping(true);
     try {
       const res = await fetch("/api/admin/pipeline/stop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ runId: currentRunId }),
+        body: JSON.stringify({ runId: runIdToStop }),
       });
       const data = await res.json();
       if (data.success) {
-        setRunning(false);
-        loadRecentRuns();
+        await loadRuns();
+        if (selectedRunId === runIdToStop) {
+          const runRes = await fetch(`/api/admin/runs?id=${runIdToStop}`);
+          if (runRes.ok) setSelectedRun(await runRes.json());
+        }
       } else {
         alert(data.error || "Failed to stop run");
       }
     } catch {
       alert("Failed to stop run");
+    } finally {
+      setStopping(false);
     }
-    setStopping(false);
   };
 
   const copyLogs = () => {
-    if (!currentRun?.logs) return;
-    const text = (currentRun.logs as RunLogMessage[])
+    if (!selectedRun?.logs) return;
+    const text = (selectedRun.logs as RunLogMessage[])
       .map((l) => `[${new Date(l.timestamp).toLocaleTimeString()}] [${l.level.toUpperCase()}] ${l.message}`)
       .join("\n");
     navigator.clipboard.writeText(text);
@@ -299,122 +330,226 @@ function PipelineTab() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const isCurrentRunActive = selectedRun?.status === "running" || selectedRun?.status === "queued";
+
+  // =========================================================================
+  // VIEW 1: Isolated Run Detail View
+  // =========================================================================
+  if (selectedRunId) {
+    return (
+      <div className="animate-fade-in">
+        {/* Back Button and Actions Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
+          <div>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => {
+                setSelectedRunId(null);
+                setSelectedRun(null);
+                loadRuns();
+              }}
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.5rem", paddingLeft: 0 }}
+            >
+              <ArrowLeft size={15} /> Back to All Runs
+            </button>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>
+              Run Details: <span style={{ fontFamily: "monospace", fontSize: "1.05rem", fontWeight: 500, color: "var(--color-text-secondary)" }}>{selectedRunId}</span>
+            </h2>
+            <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+              {selectedRun?.startedAt ? `Started on ${new Date(selectedRun.startedAt).toLocaleString()}` : "Loading run information..."}
+            </p>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            {isCurrentRunActive ? (
+              <button
+                className="btn btn-danger"
+                onClick={() => stopRun(selectedRunId)}
+                disabled={stopping}
+                style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+              >
+                {stopping ? <Loader2 className="animate-spin" size={15} /> : <XCircle size={15} />}
+                {stopping ? "Stopping & Rolling back..." : "Stop & Undo Run"}
+              </button>
+            ) : (
+              <button
+                className="btn btn-primary"
+                onClick={triggerRun}
+                disabled={triggering || !!activeRunningRun}
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                {triggering ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} />}
+                Run New Pipeline
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Selected Run Status Card */}
+        {selectedRun && (
+          <div className="card" style={{ marginBottom: "1.5rem", padding: "1.25rem" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Status:</span>
+                <StatusBadge status={selectedRun.status} />
+                <span style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
+                  Stage: <strong>{stageLabels[selectedRun.currentStage] || selectedRun.currentStage}</strong>
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.85rem", color: "var(--color-text-secondary)", flexWrap: "wrap" }}>
+              <span>📥 Emails Fetched: <strong>{selectedRun.emailsProcessed || 0}</strong></span>
+              <span>📰 Topics Extracted: <strong>{selectedRun.newslettersIdentified || 0}</strong></span>
+              <span>✍️ Articles Published: <strong>{selectedRun.articlesGenerated || 0}</strong></span>
+            </div>
+
+            {selectedRun.error && (
+              <div style={{ marginTop: "0.75rem", padding: "0.75rem 1rem", background: "rgba(220, 38, 38, 0.1)", border: "1px solid var(--color-error)", borderRadius: "8px", color: "var(--color-error)", fontSize: "0.85rem" }}>
+                <strong>Error:</strong> {selectedRun.error}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Live Execution Console for this Run */}
+        {selectedRun?.logs && selectedRun.logs.length > 0 ? (
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <h3 style={{ fontSize: "0.9rem", fontWeight: 700 }}>Execution Logs</h3>
+                {isCurrentRunActive && (
+                  <span style={{ fontSize: "0.75rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-success)" }} className="animate-pulse" />
+                    Streaming Live
+                  </span>
+                )}
+              </div>
+              <div>
+                <button className="btn btn-secondary btn-sm" onClick={copyLogs} style={{ fontSize: "0.75rem" }}>
+                  {copied ? "✓ Copied!" : "Copy Logs"}
+                </button>
+              </div>
+            </div>
+            <div
+              className="admin-console"
+              ref={consoleRef}
+              style={{
+                maxHeight: "560px",
+                fontSize: "0.82rem",
+                lineHeight: 1.6,
+              }}
+            >
+              {(selectedRun.logs as RunLogMessage[]).map((log, i) => {
+                const time = new Date(log.timestamp).toLocaleTimeString();
+                return (
+                  <div key={i} className={`log-${log.level}`} style={{ marginBottom: "0.25rem", wordBreak: "break-word" }}>
+                    <span style={{ opacity: 0.45, marginRight: "0.5rem" }}>[{time}]</span>
+                    <span>{log.message}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="card" style={{ textAlign: "center", padding: "2.5rem 1rem" }}>
+            <Loader2 className="animate-spin" size={24} style={{ margin: "0 auto 0.75rem", color: "var(--color-accent)" }} />
+            <p style={{ color: "var(--color-text-secondary)", fontSize: "0.9rem" }}>Initializing pipeline and streaming logs...</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // VIEW 2: All Runs Stack / List View
+  // =========================================================================
   return (
     <div className="animate-fade-in">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
         <div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Pipeline Runner</h2>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Pipeline Runs</h2>
           <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
-            Trigger the AI pipeline to fetch emails, generate articles, and publish.
+            Trigger new AI pipelines and inspect past execution logs.
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          {running && (
+          {activeRunningRun && (
             <button
               className="btn btn-danger"
-              onClick={stopRun}
+              onClick={() => stopRun(activeRunningRun.id)}
               disabled={stopping}
               style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
             >
               {stopping ? <Loader2 className="animate-spin" size={15} /> : <XCircle size={15} />}
-              {stopping ? "Stopping..." : "Stop & Undo Run"}
+              {stopping ? "Stopping..." : "Stop & Undo Active Run"}
             </button>
           )}
           <button
             className="btn btn-primary"
             onClick={triggerRun}
-            disabled={running}
+            disabled={triggering || !!activeRunningRun}
             style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
           >
-            {running ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} />}
-            {running ? "Running Pipeline..." : "Run Pipeline"}
+            {triggering ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} />}
+            {activeRunningRun ? "Pipeline In Progress" : "Run Pipeline"}
           </button>
         </div>
       </div>
 
-      {/* Current Run Status */}
-      {currentRun && (
-        <div className="card" style={{ marginBottom: "1.5rem", padding: "1rem 1.25rem" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Status:</span>
-              <StatusBadge status={currentRun.status} />
-              <span style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
-                Stage: <strong>{stageLabels[currentRun.currentStage] || currentRun.currentStage}</strong>
+      {/* Active Run Banner if any */}
+      {activeRunningRun && (
+        <div
+          className="card card-interactive"
+          style={{
+            marginBottom: "1.5rem",
+            padding: "1rem 1.25rem",
+            borderLeft: "4px solid var(--color-warning)",
+            background: "rgba(245, 158, 11, 0.05)",
+          }}
+          onClick={() => {
+            setSelectedRunId(activeRunningRun.id);
+            setSelectedRun(activeRunningRun);
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <span className="badge-warning" style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.2rem 0.6rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 600 }}>
+                <Loader2 className="animate-spin" size={12} /> Active Run
+              </span>
+              <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>
+                Stage: {stageLabels[activeRunningRun.currentStage] || activeRunningRun.currentStage}
               </span>
             </div>
-            {currentRun.id && (
-              <span style={{ fontSize: "0.75rem", color: "var(--color-text-tertiary)" }}>
-                Run: {currentRun.id}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <span style={{ fontSize: "0.85rem", color: "var(--color-accent)", fontWeight: 600 }}>
+                Inspect Live Run →
               </span>
-            )}
-          </div>
-          <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.85rem", color: "var(--color-text-secondary)", flexWrap: "wrap" }}>
-            <span>📥 Emails Fetched: <strong>{currentRun.emailsProcessed || 0}</strong></span>
-            <span>📰 Topics Extracted: <strong>{currentRun.newslettersIdentified || 0}</strong></span>
-            <span>✍️ Articles Published: <strong>{currentRun.articlesGenerated || 0}</strong></span>
-          </div>
-
-          {currentRun.error && (
-            <div style={{ marginTop: "0.75rem", padding: "0.75rem 1rem", background: "rgba(220, 38, 38, 0.1)", border: "1px solid var(--color-error)", borderRadius: "8px", color: "var(--color-error)", fontSize: "0.85rem" }}>
-              <strong>Error:</strong> {currentRun.error}
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Live Console */}
-      {currentRun && currentRun.logs && currentRun.logs.length > 0 && (
-        <div style={{ marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <h3 style={{ fontSize: "0.9rem", fontWeight: 700 }}>Live Execution Log</h3>
-              {running && (
-                <span style={{ fontSize: "0.75rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-success)" }} className="animate-pulse" />
-                  Streaming
-                </span>
-              )}
-            </div>
-            <div>
-              <button className="btn btn-secondary btn-sm" onClick={copyLogs} style={{ fontSize: "0.75rem" }}>
-                {copied ? "✓ Copied!" : "Copy Logs"}
-              </button>
-            </div>
-          </div>
-          <div
-            className="admin-console"
-            ref={consoleRef}
-            style={{
-              maxHeight: "520px",
-              fontSize: "0.82rem",
-              lineHeight: 1.6,
-            }}
-          >
-            {(currentRun.logs as RunLogMessage[]).map((log, i) => {
-              const time = new Date(log.timestamp).toLocaleTimeString();
-              return (
-                <div key={i} className={`log-${log.level}`} style={{ marginBottom: "0.25rem", wordBreak: "break-word" }}>
-                  <span style={{ opacity: 0.45, marginRight: "0.5rem" }}>[{time}]</span>
-                  <span>{log.message}</span>
-                </div>
-              );
-            })}
           </div>
         </div>
       )}
 
-      {/* Recent Runs */}
-      {recentRuns.length > 0 && (
-        <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-            <h3 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Recent Runs</h3>
-            <button className="btn btn-ghost btn-sm" onClick={loadRecentRuns}>
-              <RefreshCw size={13} />
-            </button>
+      {/* Recent Runs Stack */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+          <h3 style={{ fontSize: "0.95rem", fontWeight: 600 }}>Execution History</h3>
+          <button className="btn btn-ghost btn-sm" onClick={loadRuns} title="Refresh runs list">
+            <RefreshCw size={13} />
+          </button>
+        </div>
+
+        {recentRuns.length === 0 ? (
+          <div className="card" style={{ textAlign: "center", padding: "2.5rem" }}>
+            <Play size={36} style={{ color: "var(--color-text-tertiary)", margin: "0 auto 0.75rem" }} />
+            <p style={{ color: "var(--color-text-secondary)", marginBottom: "0.5rem" }}>No pipeline runs recorded yet.</p>
+            <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+              Click <strong>&quot;Run Pipeline&quot;</strong> above to start your first execution.
+            </p>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {recentRuns.slice(0, 10).map((run) => {
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+            {recentRuns.map((run) => {
               const start = new Date(run.startedAt);
               const duration = run.completedAt
                 ? Math.round((new Date(run.completedAt).getTime() - start.getTime()) / 1000)
@@ -423,35 +558,42 @@ function PipelineTab() {
               return (
                 <div
                   key={run.id}
-                  className="card"
-                  style={{ padding: "0.75rem 1rem", cursor: "pointer" }}
+                  className="card card-interactive"
+                  style={{ padding: "0.9rem 1.25rem", cursor: "pointer" }}
                   onClick={() => {
-                    setCurrentRunId(run.id);
-                    setCurrentRun(run);
+                    setSelectedRunId(run.id);
+                    setSelectedRun(run);
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
                       <StatusBadge status={run.status} />
-                      <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
+                      <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
                         {start.toLocaleString()}
                       </span>
+                      <span style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
+                        ({stageLabels[run.currentStage] || run.currentStage})
+                      </span>
                     </div>
-                    <div style={{ display: "flex", gap: "1rem", fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
-                      <span>{run.articlesGenerated} articles</span>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "1.25rem", fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
+                      <span>📥 {run.emailsProcessed || 0} emails</span>
+                      <span>📰 {run.newslettersIdentified || 0} topics</span>
+                      <span>✍️ {run.articlesGenerated || 0} articles</span>
                       {duration !== null && (
-                        <span style={{ display: "flex", alignItems: "center", gap: "0.2rem" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
                           <Clock size={12} /> {duration}s
                         </span>
                       )}
+                      <ChevronRight size={16} style={{ color: "var(--color-text-tertiary)" }} />
                     </div>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
