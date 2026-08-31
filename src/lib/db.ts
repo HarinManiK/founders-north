@@ -221,6 +221,11 @@ export async function updateDigest(
   await db.collection("digests").doc(id).update(updates);
 }
 
+export async function deleteDigest(id: string): Promise<void> {
+  const db = getDb();
+  await db.collection("digests").doc(id).delete();
+}
+
 // ---- Categories ----
 
 export async function getCategories(): Promise<Category[]> {

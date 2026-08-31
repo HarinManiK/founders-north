@@ -933,6 +933,20 @@ function DigestsTab() {
     }
   };
 
+  const deleteDigest = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this daily digest?")) return;
+    try {
+      const res = await fetch(`/api/admin/digests/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        load();
+      } else {
+        alert("Failed to delete digest");
+      }
+    } catch {
+      alert("Failed to delete digest");
+    }
+  };
+
   if (loading) {
     return <div style={{ display: "flex", justifyContent: "center", padding: "2rem" }}><Loader2 className="animate-spin" size={24} /></div>;
   }
@@ -942,7 +956,7 @@ function DigestsTab() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
         <div>
           <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Daily Digests ({digests.length})</h2>
-          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>View and edit daily briefings.</p>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>View, edit, and manage daily briefings.</p>
         </div>
         <button className="btn btn-ghost btn-sm" onClick={load}><RefreshCw size={13} /></button>
       </div>
@@ -997,9 +1011,14 @@ function DigestsTab() {
                   {digest.date} - {digest.highlights?.length || 0} stories
                 </p>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => startEdit(digest)}>
-                <Edit3 size={14} />
-              </button>
+              <div style={{ display: "flex", gap: "0.4rem" }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => startEdit(digest)} title="Edit Digest">
+                  <Edit3 size={14} />
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => deleteDigest(digest.id)} title="Delete Digest" style={{ color: "var(--color-error)" }}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
