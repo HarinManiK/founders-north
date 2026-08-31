@@ -51,14 +51,24 @@ export default function Header() {
         <Link
           href="/"
           style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.6rem",
             fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: "1.3rem",
+            fontSize: "1.25rem",
             fontWeight: 800,
             color: "var(--color-text-primary)",
             letterSpacing: "-0.02em",
             textDecoration: "none",
           }}
         >
+          <img
+            src="/logo.png"
+            alt="Founders North Logo"
+            width={28}
+            height={28}
+            style={{ objectFit: "contain", borderRadius: "4px" }}
+          />
           Founders North
         </Link>
 

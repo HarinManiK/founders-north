@@ -144,9 +144,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       {/* Header */}
       <div style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-bg-card)", padding: "0 1.5rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", height: "56px", maxWidth: "1200px", margin: "0 auto" }}>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "1.1rem", fontWeight: 800 }}>
-            Founders North <span style={{ fontWeight: 500, color: "var(--color-text-tertiary)", fontSize: "0.85rem" }}>Admin</span>
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <img
+              src="/logo.png"
+              alt="Founders North Logo"
+              width={26}
+              height={26}
+              style={{ objectFit: "contain", borderRadius: "4px" }}
+            />
+            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "1.1rem", fontWeight: 800 }}>
+              Founders North <span style={{ fontWeight: 500, color: "var(--color-text-tertiary)", fontSize: "0.85rem" }}>Admin</span>
+            </h1>
+          </div>
           <button className="btn btn-ghost btn-sm" onClick={onLogout} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
             <LogOut size={14} /> Logout
           </button>
