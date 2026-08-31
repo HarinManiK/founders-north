@@ -264,7 +264,6 @@ function PipelineTab() {
   };
 
   const [copied, setCopied] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [stopping, setStopping] = useState(false);
 
   const stopRun = async () => {
@@ -377,10 +376,7 @@ function PipelineTab() {
                 </span>
               )}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(!expanded)} style={{ fontSize: "0.75rem" }}>
-                {expanded ? "Collapse" : "Expand"}
-              </button>
+            <div>
               <button className="btn btn-secondary btn-sm" onClick={copyLogs} style={{ fontSize: "0.75rem" }}>
                 {copied ? "✓ Copied!" : "Copy Logs"}
               </button>
@@ -390,7 +386,7 @@ function PipelineTab() {
             className="admin-console"
             ref={consoleRef}
             style={{
-              maxHeight: expanded ? "750px" : "420px",
+              maxHeight: "520px",
               fontSize: "0.82rem",
               lineHeight: 1.6,
             }}
