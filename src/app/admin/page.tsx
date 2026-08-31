@@ -363,23 +363,23 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             {isCurrentRunActive ? (
               <button
-                className="btn btn-danger"
+                className="btn btn-secondary btn-sm"
                 onClick={() => stopRun(selectedRunId)}
                 disabled={stopping}
-                style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+                style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--color-error)", borderColor: "rgba(220, 38, 38, 0.3)" }}
               >
-                {stopping ? <Loader2 className="animate-spin" size={15} /> : <XCircle size={15} />}
-                {stopping ? "Stopping & Rolling back..." : "Stop & Undo Run"}
+                {stopping ? <Loader2 className="animate-spin" size={14} /> : <XCircle size={14} />}
+                {stopping ? "Stopping..." : "Stop Run"}
               </button>
             ) : (
               <button
-                className="btn btn-primary"
+                className="btn btn-primary btn-sm"
                 onClick={triggerRun}
                 disabled={triggering || !!activeRunningRun}
-                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+                style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
               >
-                {triggering ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} />}
-                Run New Pipeline
+                {triggering ? <Loader2 className="animate-spin" size={14} /> : <Play size={14} />}
+                Run Pipeline
               </button>
             )}
           </div>
@@ -399,9 +399,9 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
             </div>
 
             <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.85rem", color: "var(--color-text-secondary)", flexWrap: "wrap" }}>
-              <span>📥 Emails Fetched: <strong>{selectedRun.emailsProcessed || 0}</strong></span>
-              <span>📰 Topics Extracted: <strong>{selectedRun.newslettersIdentified || 0}</strong></span>
-              <span>✍️ Articles Published: <strong>{selectedRun.articlesGenerated || 0}</strong></span>
+              <span>📥 Emails: <strong>{selectedRun.emailsProcessed || 0}</strong></span>
+              <span>📰 Topics: <strong>{selectedRun.newslettersIdentified || 0}</strong></span>
+              <span>✍️ Articles: <strong>{selectedRun.articlesGenerated || 0}</strong></span>
             </div>
 
             {selectedRun.error && (
@@ -476,59 +476,26 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           {activeRunningRun && (
             <button
-              className="btn btn-danger"
+              className="btn btn-secondary btn-sm"
               onClick={() => stopRun(activeRunningRun.id)}
               disabled={stopping}
-              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+              style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--color-error)", borderColor: "rgba(220, 38, 38, 0.3)" }}
             >
-              {stopping ? <Loader2 className="animate-spin" size={15} /> : <XCircle size={15} />}
-              {stopping ? "Stopping..." : "Stop & Undo Active Run"}
+              {stopping ? <Loader2 className="animate-spin" size={14} /> : <XCircle size={14} />}
+              {stopping ? "Stopping..." : "Stop Active Run"}
             </button>
           )}
           <button
-            className="btn btn-primary"
+            className="btn btn-primary btn-sm"
             onClick={triggerRun}
             disabled={triggering || !!activeRunningRun}
-            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
           >
-            {triggering ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} />}
-            {activeRunningRun ? "Pipeline In Progress" : "Run Pipeline"}
+            {triggering ? <Loader2 className="animate-spin" size={14} /> : <Play size={14} />}
+            {activeRunningRun ? "Running..." : "Run Pipeline"}
           </button>
         </div>
       </div>
-
-      {/* Active Run Banner if any */}
-      {activeRunningRun && (
-        <div
-          className="card card-interactive"
-          style={{
-            marginBottom: "1.5rem",
-            padding: "1rem 1.25rem",
-            borderLeft: "4px solid var(--color-warning)",
-            background: "rgba(245, 158, 11, 0.05)",
-          }}
-          onClick={() => {
-            setSelectedRunId(activeRunningRun.id);
-            setSelectedRun(activeRunningRun);
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <span className="badge-warning" style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", padding: "0.2rem 0.6rem", borderRadius: "9999px", fontSize: "0.75rem", fontWeight: 600 }}>
-                <Loader2 className="animate-spin" size={12} /> Active Run
-              </span>
-              <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>
-                Stage: {stageLabels[activeRunningRun.currentStage] || activeRunningRun.currentStage}
-              </span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--color-accent)", fontWeight: 600 }}>
-                Inspect Live Run →
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Recent Runs Stack */}
       <div>
