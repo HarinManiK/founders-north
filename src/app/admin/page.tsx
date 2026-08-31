@@ -262,6 +262,19 @@ function PipelineTab() {
     failed: "Failed",
   };
 
+  const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const copyLogs = () => {
+    if (!currentRun?.logs) return;
+    const text = (currentRun.logs as RunLogMessage[])
+      .map((l) => `[${new Date(l.timestamp).toLocaleTimeString()}] [${l.level.toUpperCase()}] ${l.message}`)
+      .join("\n");
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
   return (
     <div className="animate-fade-in">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem", flexWrap: "wrap", gap: "0.75rem" }}>
@@ -278,25 +291,38 @@ function PipelineTab() {
           style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
         >
           {running ? <Loader2 className="animate-spin" size={16} /> : <Play size={16} />}
-          {running ? "Running..." : "Run Pipeline"}
+          {running ? "Running Pipeline..." : "Run Pipeline"}
         </button>
       </div>
 
       {/* Current Run Status */}
       {currentRun && (
         <div className="card" style={{ marginBottom: "1.5rem", padding: "1rem 1.25rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Status:</span>
-            <StatusBadge status={currentRun.status} />
-            <span style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
-              Stage: {stageLabels[currentRun.currentStage] || currentRun.currentStage}
-            </span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Status:</span>
+              <StatusBadge status={currentRun.status} />
+              <span style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
+                Stage: <strong>{stageLabels[currentRun.currentStage] || currentRun.currentStage}</strong>
+              </span>
+            </div>
+            {currentRun.id && (
+              <span style={{ fontSize: "0.75rem", color: "var(--color-text-tertiary)" }}>
+                Run: {currentRun.id}
+              </span>
+            )}
           </div>
-          <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.8rem", color: "var(--color-text-tertiary)", flexWrap: "wrap" }}>
-            <span>Emails: {currentRun.emailsProcessed}</span>
-            <span>Topics: {currentRun.newslettersIdentified}</span>
-            <span>Articles: {currentRun.articlesGenerated}</span>
+          <div style={{ display: "flex", gap: "1.5rem", fontSize: "0.85rem", color: "var(--color-text-secondary)", flexWrap: "wrap" }}>
+            <span>📥 Emails Fetched: <strong>{currentRun.emailsProcessed || 0}</strong></span>
+            <span>📰 Topics Extracted: <strong>{currentRun.newslettersIdentified || 0}</strong></span>
+            <span>✍️ Articles Published: <strong>{currentRun.articlesGenerated || 0}</strong></span>
           </div>
+
+          {currentRun.error && (
+            <div style={{ marginTop: "0.75rem", padding: "0.75rem 1rem", background: "rgba(220, 38, 38, 0.1)", border: "1px solid var(--color-error)", borderRadius: "8px", color: "var(--color-error)", fontSize: "0.85rem" }}>
+              <strong>Error:</strong> {currentRun.error}
+            </div>
+          )}
         </div>
       )}
 
@@ -304,20 +330,39 @@ function PipelineTab() {
       {currentRun && currentRun.logs && currentRun.logs.length > 0 && (
         <div style={{ marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-            <h3 style={{ fontSize: "0.85rem", fontWeight: 600 }}>Live Console</h3>
-            {running && (
-              <span style={{ fontSize: "0.75rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-success)" }} className="animate-pulse" />
-                Live
-              </span>
-            )}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <h3 style={{ fontSize: "0.9rem", fontWeight: 700 }}>Live Execution Log</h3>
+              {running && (
+                <span style={{ fontSize: "0.75rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-success)" }} className="animate-pulse" />
+                  Streaming
+                </span>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(!expanded)} style={{ fontSize: "0.75rem" }}>
+                {expanded ? "Collapse" : "Expand"}
+              </button>
+              <button className="btn btn-secondary btn-sm" onClick={copyLogs} style={{ fontSize: "0.75rem" }}>
+                {copied ? "✓ Copied!" : "Copy Logs"}
+              </button>
+            </div>
           </div>
-          <div className="admin-console" ref={consoleRef}>
+          <div
+            className="admin-console"
+            ref={consoleRef}
+            style={{
+              maxHeight: expanded ? "750px" : "420px",
+              fontSize: "0.82rem",
+              lineHeight: 1.6,
+            }}
+          >
             {(currentRun.logs as RunLogMessage[]).map((log, i) => {
               const time = new Date(log.timestamp).toLocaleTimeString();
               return (
-                <div key={i} className={`log-${log.level}`} style={{ marginBottom: "0.2rem" }}>
-                  <span style={{ opacity: 0.5 }}>[{time}]</span> {log.message}
+                <div key={i} className={`log-${log.level}`} style={{ marginBottom: "0.25rem", wordBreak: "break-word" }}>
+                  <span style={{ opacity: 0.45, marginRight: "0.5rem" }}>[{time}]</span>
+                  <span>{log.message}</span>
                 </div>
               );
             })}
