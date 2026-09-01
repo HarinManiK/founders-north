@@ -56,10 +56,10 @@ export default async function HomePage() {
                 </p>
                 {latestDigest.highlights && latestDigest.highlights.length > 0 && (
                   <div className="hero-highlights-list">
-                    {latestDigest.highlights.slice(0, 3).map((h, i) => (
-                      <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
-                        <span style={{ color: "var(--color-accent)", fontWeight: 700, fontSize: "0.85rem", minWidth: "1.2rem" }}>{i + 1}.</span>
-                        <span style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>{h.title}</span>
+                    {latestDigest.highlights.slice(0, 4).map((h, i) => (
+                      <div key={i} className="hero-highlights-item">
+                        <span style={{ color: "var(--color-accent)", fontWeight: 700, minWidth: "1.2rem" }}>{i + 1}.</span>
+                        <span style={{ flex: 1 }}>{h.title}</span>
                       </div>
                     ))}
                   </div>

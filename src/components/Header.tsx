@@ -45,6 +45,9 @@ export default function Header() {
         borderBottom: "1px solid var(--color-border)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
+        width: "100%",
+        maxWidth: "100vw",
+        overflow: "hidden",
       }}
     >
       <div
@@ -53,8 +56,10 @@ export default function Header() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          height: "60px",
-          gap: "0.5rem",
+          height: "56px",
+          gap: "0.25rem",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
         {/* Brand Logo */}
@@ -63,21 +68,22 @@ export default function Header() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.5rem",
+            gap: "0.4rem",
             fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: "1.1rem",
+            fontSize: "1.05rem",
             fontWeight: 800,
             color: "var(--color-text-primary)",
             letterSpacing: "-0.02em",
             textDecoration: "none",
             flexShrink: 0,
+            minWidth: 0,
           }}
         >
           <img
             src="/logo.png"
             alt="Founders North"
-            width={26}
-            height={26}
+            width={24}
+            height={24}
             style={{ objectFit: "contain", borderRadius: "4px" }}
           />
           <span className="brand-title">Founders North</span>
@@ -88,7 +94,8 @@ export default function Header() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.75rem",
+            gap: "0.3rem",
+            flexShrink: 0,
           }}
         >
           {navLinks.map((link) => {
@@ -111,8 +118,8 @@ export default function Header() {
             onClick={toggleTheme}
             className="btn-ghost"
             style={{
-              padding: "0.4rem",
-              borderRadius: "8px",
+              padding: "0.35rem",
+              borderRadius: "6px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -121,7 +128,7 @@ export default function Header() {
             aria-label="Toggle theme"
             title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
           >
-            {theme === "light" ? <Moon size={17} /> : <Sun size={17} />}
+            {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
           </button>
         </nav>
       </div>
