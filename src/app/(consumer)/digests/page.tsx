@@ -5,9 +5,20 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://founders-north.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Daily Digests - Founders North",
-  description: "Browse all daily briefings and digest archives.",
+  title: "Daily Executive Digests",
+  description: "Browse the full archive of daily executive briefings and synthesized tech intelligence.",
+  alternates: {
+    canonical: `${SITE_URL}/digests`,
+  },
+  openGraph: {
+    type: "website",
+    url: `${SITE_URL}/digests`,
+    title: "Daily Executive Digests | Founders North",
+    description: "Browse the full archive of daily executive briefings and synthesized tech intelligence.",
+  },
 };
 
 export default async function DigestsPage() {
@@ -20,8 +31,27 @@ export default async function DigestsPage() {
     // Firestore not configured
   }
 
+  const digestsJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Daily Executive Digests - Founders North",
+    url: `${SITE_URL}/digests`,
+    description: "Your daily briefing archive. Each digest summarizes the key stories and developments.",
+    hasPart: digests.map((d) => ({
+      "@type": "Report",
+      name: d.title,
+      url: `${SITE_URL}/digests/${d.slug}`,
+      datePublished: d.publishedAt,
+    })),
+  };
+
   return (
     <div className="animate-fade-in" style={{ padding: "2.5rem 0 3rem" }}>
+      {/* Invisible Structured Data Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(digestsJsonLd) }}
+      />
       <div className="container-main">
         <div style={{ marginBottom: "2rem" }}>
           <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.5rem" }}>Daily Digests</h1>

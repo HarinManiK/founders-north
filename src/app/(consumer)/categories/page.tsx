@@ -5,9 +5,20 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://founders-north.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Articles - Founders North",
-  description: "Browse curated articles and topics.",
+  title: "Articles & Categories",
+  description: "Browse curated tech, startup, AI, and business topics curated from top industry sources.",
+  alternates: {
+    canonical: `${SITE_URL}/categories`,
+  },
+  openGraph: {
+    type: "website",
+    url: `${SITE_URL}/categories`,
+    title: "Articles & Categories | Founders North",
+    description: "Browse curated tech, startup, AI, and business topics curated from top industry sources.",
+  },
 };
 
 export default async function CategoriesPage() {
@@ -19,8 +30,26 @@ export default async function CategoriesPage() {
     // Firestore not configured
   }
 
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Articles & Categories - Founders North",
+    url: `${SITE_URL}/categories`,
+    description: "Browse curated articles and news topics curated from top industry newsletters.",
+    hasPart: categories.map((cat) => ({
+      "@type": "WebPage",
+      name: cat.name,
+      url: `${SITE_URL}/category/${cat.slug}`,
+    })),
+  };
+
   return (
     <div className="animate-fade-in" style={{ padding: "2rem 0 3rem" }}>
+      {/* Invisible Structured Data Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
       <div className="container-main">
         <div style={{ marginBottom: "1.75rem" }}>
           <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.4rem" }}>Articles</h1>

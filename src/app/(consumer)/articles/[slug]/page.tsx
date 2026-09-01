@@ -11,13 +11,46 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://founders-north.vercel.app";
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) return { title: "Article Not Found" };
+
+  const articleUrl = `${SITE_URL}/articles/${article.slug}`;
+
   return {
-    title: `${article.title} - Founders North`,
+    title: article.title,
     description: article.excerpt,
+    alternates: {
+      canonical: articleUrl,
+    },
+    openGraph: {
+      type: "article",
+      url: articleUrl,
+      title: article.title,
+      description: article.excerpt,
+      publishedTime: article.publishedAt,
+      modifiedTime: article.publishedAt,
+      authors: ["Founders North Editorial"],
+      section: article.categoryName,
+      tags: [article.categoryName, "Tech News", "Founders Intelligence"],
+      images: [
+        {
+          url: "/logo.png",
+          width: 512,
+          height: 512,
+          alt: article.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: article.excerpt,
+      images: ["/logo.png"],
+    },
   };
 }
 
@@ -48,8 +81,79 @@ export default async function ArticlePage({ params }: Props) {
   const webSources = (article.sourceUrls || []).filter((s) => s.url);
   const newsletterSources = (article.sourceUrls || []).filter((s) => s.newsletterName);
 
+  // Machine-readable JSON-LD Schema for Google & AI Search Engines (Perplexity, SGE, ChatGPT)
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: article.title,
+    description: article.excerpt,
+    datePublished: article.publishedAt,
+    dateModified: article.publishedAt,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/articles/${article.slug}`,
+    },
+    author: {
+      "@type": "Organization",
+      name: "Founders North Editorial",
+      url: SITE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Founders North",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo.png`,
+      },
+    },
+    articleSection: article.categoryName,
+    timeRequired: `PT${article.readTimeMinutes}M`,
+    isBasedOn: webSources.map((s) => s.url),
+    citation: webSources.map((s) => s.url),
+  };
+
+  const breadcrumbsJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Articles",
+        item: `${SITE_URL}/categories`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: article.categoryName,
+        item: `${SITE_URL}/category/${article.categoryId}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: article.title,
+        item: `${SITE_URL}/articles/${article.slug}`,
+      },
+    ],
+  };
+
   return (
     <div className="animate-fade-in" style={{ padding: "1.5rem 0 3rem" }}>
+      {/* Invisible Structured Data Schemas for Search Engines & AI Search */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }}
+      />
       <ReadingProgressBar />
       <div className="container-narrow">
         {/* Back Link */}

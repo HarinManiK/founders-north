@@ -29,8 +29,31 @@ export default async function HomePage() {
 
   const hasContent = latestDigest || topArticles.length > 0 || recentArticles.length > 0;
 
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://founders-north.vercel.app";
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Founders North",
+    url: SITE_URL,
+    description: "Daily briefings, in-depth analysis, and essential news for founders, operators, and business leaders.",
+    publisher: {
+      "@type": "Organization",
+      name: "Founders North",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo.png`,
+      },
+    },
+  };
+
   return (
     <div className="animate-fade-in">
+      {/* Invisible Structured Data Schemas for Search Engines & AI Search */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
       {/* Hero Section */}
       <section
         style={{

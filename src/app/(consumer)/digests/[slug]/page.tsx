@@ -11,13 +11,46 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://founders-north.vercel.app";
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const digest = await getDigestBySlug(slug);
   if (!digest) return { title: "Digest Not Found" };
+
+  const digestUrl = `${SITE_URL}/digests/${digest.slug}`;
+
   return {
-    title: `${digest.title} - Founders North`,
+    title: `${digest.title} - Daily Briefing`,
     description: digest.summary,
+    alternates: {
+      canonical: digestUrl,
+    },
+    openGraph: {
+      type: "article",
+      url: digestUrl,
+      title: digest.title,
+      description: digest.summary,
+      publishedTime: digest.publishedAt,
+      modifiedTime: digest.publishedAt,
+      authors: ["Founders North Editorial"],
+      section: "Daily Briefings",
+      tags: ["Daily Digest", "Executive Summary", "Founders Intelligence"],
+      images: [
+        {
+          url: "/logo.png",
+          width: 512,
+          height: 512,
+          alt: digest.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: digest.title,
+      description: digest.summary,
+      images: ["/logo.png"],
+    },
   };
 }
 
@@ -41,8 +74,69 @@ export default async function DigestPage({ params }: Props) {
     day: "numeric",
   });
 
+  // Machine-readable JSON-LD Schema for Google & AI Search Engines
+  const digestJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Report",
+    headline: digest.title,
+    description: digest.summary,
+    datePublished: digest.publishedAt,
+    dateModified: digest.publishedAt,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${SITE_URL}/digests/${digest.slug}`,
+    },
+    author: {
+      "@type": "Organization",
+      name: "Founders North Editorial",
+      url: SITE_URL,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Founders North",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo.png`,
+      },
+    },
+  };
+
+  const breadcrumbsJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Daily Digests",
+        item: `${SITE_URL}/digests`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: digest.title,
+        item: `${SITE_URL}/digests/${digest.slug}`,
+      },
+    ],
+  };
+
   return (
     <div className="animate-fade-in" style={{ padding: "2rem 0 3rem" }}>
+      {/* Invisible Structured Data Schemas for Search Engines & AI Search */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(digestJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }}
+      />
       <div className="container-narrow">
         <Link
           href="/digests"
