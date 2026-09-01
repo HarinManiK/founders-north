@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/db";
 import { Clock, ArrowLeft, ExternalLink, Lightbulb, Share2 } from "lucide-react";
 import ReadingProgressBar from "@/components/ReadingProgressBar";
+import { getSiteUrl } from "@/lib/site";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +12,7 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://founders-north.vercel.app";
+const SITE_URL = getSiteUrl();
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

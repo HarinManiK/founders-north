@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getPublishedArticles, getAllDigests, getCategories } from "@/lib/db";
+import { getSiteUrl } from "@/lib/site";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://founders-north.vercel.app";
+const SITE_URL = getSiteUrl();
 
 export const dynamic = "force-dynamic";
 

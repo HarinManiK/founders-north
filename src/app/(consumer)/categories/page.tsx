@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { getCategories } from "@/lib/db";
 import { FolderOpen } from "lucide-react";
+import { getSiteUrl } from "@/lib/site";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://founders-north.vercel.app";
+const SITE_URL = getSiteUrl();
 
 export const metadata: Metadata = {
   title: "Articles & Categories",

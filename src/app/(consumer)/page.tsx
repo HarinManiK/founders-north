@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getLatestDigest, getTopArticles, getPublishedArticles } from "@/lib/db";
 import { Clock, ArrowRight, BookOpen, TrendingUp, Sparkles } from "lucide-react";
+import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export default async function HomePage() {
 
   const hasContent = latestDigest || topArticles.length > 0 || recentArticles.length > 0;
 
-  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://founders-north.vercel.app";
+  const SITE_URL = getSiteUrl();
 
   const websiteJsonLd = {
     "@context": "https://schema.org",
