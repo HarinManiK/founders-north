@@ -24,6 +24,7 @@ import {
   Clock,
   ArrowLeft,
   ChevronRight,
+  Activity,
 } from "lucide-react";
 import type {
   AppSettings,
@@ -763,9 +764,9 @@ function SettingsTab() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setTestResult({ success: true, message: "✓ Runner started successfully! Check the Runs tab." });
+        setTestResult({ success: true, message: data.message || "✓ GitHub Actions connected & ready!" });
       } else {
-        setTestResult({ success: false, message: `Error: ${data.error || "Failed to trigger"}` });
+        setTestResult({ success: false, message: `Error: ${data.error || "Connection failed"}` });
       }
     } catch (e: unknown) {
       setTestResult({ success: false, message: `Error: ${e instanceof Error ? e.message : "Network failure"}` });
@@ -926,7 +927,7 @@ function SettingsTab() {
             />
           </div>
 
-          {/* Test Trigger Button */}
+          {/* Test Connection Button */}
           <div style={{ paddingTop: "0.85rem", borderTop: "1px solid var(--color-border-light)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
             <button
               className="btn btn-secondary btn-sm"
@@ -934,8 +935,8 @@ function SettingsTab() {
               disabled={testingTrigger}
               style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
             >
-              {testingTrigger ? <Loader2 className="animate-spin" size={14} /> : <Play size={14} />}
-              {testingTrigger ? "Dispatching..." : "Test Run Trigger"}
+              {testingTrigger ? <Loader2 className="animate-spin" size={14} /> : <Activity size={14} />}
+              {testingTrigger ? "Testing..." : "Test Connection"}
             </button>
             {testResult && (
               <span style={{ fontSize: "0.8rem", color: testResult.success ? "var(--color-success)" : "var(--color-error)" }}>

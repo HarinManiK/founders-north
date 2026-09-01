@@ -29,47 +29,64 @@ export async function POST(request: NextRequest) {
 
     if (!githubToken) {
       return NextResponse.json(
-        { error: "GitHub PAT token is not configured in GITHUB_PAT environment variable or database." },
+        {
+          error:
+            "GitHub PAT is not set. Add GITHUB_PAT to your environment variables or settings.",
+        },
         { status: 400 }
       );
     }
 
-    // Call GitHub Actions workflow dispatch API
-    const response = await fetch(
-      `https://api.github.com/repos/${githubRepo}/actions/workflows/pipeline.yml/dispatches`,
+    // Ping check: Query workflow status via GitHub API without running any pipeline or LLM calls
+    const checkResponse = await fetch(
+      `https://api.github.com/repos/${githubRepo}/actions/workflows/pipeline.yml`,
       {
-        method: "POST",
         headers: {
           Authorization: `Bearer ${githubToken}`,
           Accept: "application/vnd.github+json",
           "X-GitHub-Api-Version": "2022-11-28",
           "User-Agent": "Founders-North-Admin",
         },
-        body: JSON.stringify({
-          ref: "main",
-          inputs: {
-            trigger_source: "admin_panel_test",
-          },
-        }),
       }
     );
 
-    if (response.status === 204) {
+    if (checkResponse.ok) {
+      const data = await checkResponse.json();
       return NextResponse.json({
         success: true,
-        message: "✓ Runner started successfully! Check the Runs tab.",
+        message: `✓ Connected! GitHub Actions runner is active (${data.name || "pipeline.yml"}).`,
         repo: githubRepo,
+        workflowState: data.state || "active",
       });
     }
 
-    const errorData = await response.json().catch(() => ({}));
+    if (checkResponse.status === 401 || checkResponse.status === 403) {
+      return NextResponse.json(
+        {
+          error:
+            "GitHub token authorization failed. Please check token permissions (Actions: Read & write).",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (checkResponse.status === 404) {
+      return NextResponse.json(
+        {
+          error: `Workflow 'pipeline.yml' not found in repository ${githubRepo}. Make sure the code is pushed to GitHub.`,
+        },
+        { status: 404 }
+      );
+    }
+
+    const errorData = await checkResponse.json().catch(() => ({}));
     return NextResponse.json(
       {
         error:
           errorData.message ||
-          `GitHub API returned ${response.status}: ${response.statusText}`,
+          `GitHub API responded with HTTP ${checkResponse.status}: ${checkResponse.statusText}`,
       },
-      { status: response.status || 500 }
+      { status: checkResponse.status || 500 }
     );
   } catch (error) {
     return NextResponse.json(
@@ -77,7 +94,7 @@ export async function POST(request: NextRequest) {
         error:
           error instanceof Error
             ? error.message
-            : "Failed to trigger GitHub Action",
+            : "Failed to connect to GitHub API",
       },
       { status: 500 }
     );
