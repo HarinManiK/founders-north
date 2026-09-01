@@ -77,6 +77,15 @@ export default async function DigestPage({ params }: Props) {
     day: "numeric",
   });
 
+  const publishedSlugs = new Set(allArticles.map((a) => a.slug));
+  const publishedTitles = allArticles.map((a) => a.title.toLowerCase());
+
+  const visibleHighlights = (digest.highlights || []).filter((h) => {
+    if (h.articleSlug && publishedSlugs.has(h.articleSlug)) return true;
+    const hTitle = h.title?.toLowerCase() || "";
+    return publishedTitles.some((t) => t.includes(hTitle) || hTitle.includes(t));
+  });
+
   // Machine-readable JSON-LD Schema for Google & AI Search Engines
   const digestJsonLd = {
     "@context": "https://schema.org",
@@ -185,13 +194,13 @@ export default async function DigestPage({ params }: Props) {
         </div>
 
         {/* Story Highlights */}
-        {digest.highlights && digest.highlights.length > 0 && (
+        {visibleHighlights && visibleHighlights.length > 0 && (
           <div style={{ marginBottom: "2rem" }}>
             <h2 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "1.25rem" }}>
               Stories in This Digest
             </h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {digest.highlights.map((h, i) => {
+              {visibleHighlights.map((h, i) => {
                 // Find matching article slug with multi-layer fallback
                 let targetSlug = h.articleSlug;
                 if (!targetSlug) {

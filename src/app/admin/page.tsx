@@ -401,7 +401,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.5rem" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
                 <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>Status:</span>
-                <StatusBadge status={selectedRun.status} />
+                <RunStatusBadge status={selectedRun.status} />
                 <span style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
                   Stage: <strong>{stageLabels[selectedRun.currentStage] || selectedRun.currentStage}</strong>
                 </span>
@@ -638,7 +638,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-                      <StatusBadge status={run.status} />
+                      <RunStatusBadge status={run.status} />
                       <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
                         {start.toLocaleString()}
                       </span>
@@ -669,7 +669,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function RunStatusBadge({ status }: { status: string }) {
   const config: Record<string, { icon: React.ReactNode; className: string; label: string }> = {
     queued: { icon: <Clock size={12} />, className: "badge-warning", label: "Queued" },
     running: { icon: <Loader2 className="animate-spin" size={12} />, className: "badge-warning", label: "Running" },
@@ -913,6 +913,9 @@ function SettingsTab() {
             />
           </div>
         </div>
+
+        {/* Database Integrity & Sync Utility */}
+        <DatabaseSyncCard />
       </div>
     </div>
   );
@@ -1008,6 +1011,134 @@ function PromptsTab() {
 }
 
 // ============================================================================
+// Status Badge Component (1-Click Toggle)
+// ============================================================================
+
+function StatusBadge({
+  status,
+  onToggle,
+  disabled = false,
+}: {
+  status: "published" | "draft";
+  onToggle?: () => void;
+  disabled?: boolean;
+}) {
+  const isPublished = status === "published";
+  return (
+    <button
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onToggle && !disabled) onToggle();
+      }}
+      disabled={disabled || !onToggle}
+      className={`badge ${isPublished ? "badge-success" : "badge-warning"}`}
+      style={{
+        fontSize: "0.7rem",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.35rem",
+        cursor: onToggle && !disabled ? "pointer" : "default",
+        border: "none",
+        padding: "0.2rem 0.6rem",
+        borderRadius: "6px",
+        fontWeight: 600,
+        background: isPublished ? "rgba(16, 185, 129, 0.12)" : "rgba(245, 158, 11, 0.12)",
+        color: isPublished ? "var(--color-success)" : "var(--color-warning)",
+        transition: "all 0.2s ease",
+      }}
+      title={onToggle ? `Click to switch to ${isPublished ? "Draft" : "Published"}` : undefined}
+    >
+      <span
+        style={{
+          width: "6px",
+          height: "6px",
+          borderRadius: "50%",
+          background: isPublished ? "var(--color-success)" : "var(--color-warning)",
+        }}
+      />
+      {isPublished ? "Published" : "Draft"}
+    </button>
+  );
+}
+
+// ============================================================================
+// Database Sync & Validation Card
+// ============================================================================
+
+function DatabaseSyncCard() {
+  const [syncing, setSyncing] = useState(false);
+  const [result, setResult] = useState<{
+    categoriesAudited: number;
+    categoriesCleaned: number;
+    digestsAudited: number;
+    digestsCleaned: number;
+    articlesAudited: number;
+  } | null>(null);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/admin/sync", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.report) {
+        setResult(data.report);
+      } else {
+        alert(data.error || "Database sync failed");
+      }
+    } catch {
+      alert("Failed to run database sync");
+    }
+    setSyncing(false);
+  };
+
+  return (
+    <div className="card" style={{ padding: "1.5rem", gridColumn: "1 / -1" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.75rem" }}>
+        <div>
+          <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Database Relationships &amp; Integrity Sync</h3>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)", marginTop: "0.2rem" }}>
+            Audits all relationships: recalculates published counts for every category, cleans up orphaned highlights in digests, and auto-removes empty documents.
+          </p>
+        </div>
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={handleSync}
+          disabled={syncing}
+          style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+        >
+          {syncing ? <Loader2 className="animate-spin" size={13} /> : <RotateCcw size={13} />}
+          {syncing ? "Auditing Database..." : "Sync & Validate Database"}
+        </button>
+      </div>
+
+      {result && (
+        <div
+          className="animate-fade-in"
+          style={{
+            padding: "0.85rem 1rem",
+            background: "rgba(16, 185, 129, 0.08)",
+            border: "1px solid rgba(16, 185, 129, 0.2)",
+            borderRadius: "8px",
+            marginTop: "0.75rem",
+            fontSize: "0.85rem",
+            color: "var(--color-text-primary)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontWeight: 600, color: "var(--color-success)", marginBottom: "0.3rem" }}>
+            <CheckCircle size={14} /> Database Synchronized Successfully
+          </div>
+          <p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "0.8rem" }}>
+            Audited {result.articlesAudited} articles, {result.categoriesAudited} categories ({result.categoriesCleaned} cleaned), and {result.digestsAudited} digests ({result.digestsCleaned} cleaned).
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // Articles Tab
 // ============================================================================
 
@@ -1016,6 +1147,7 @@ function ArticlesTab() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Article>>({});
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1050,21 +1182,22 @@ function ArticlesTab() {
       setEditingId(null);
       load();
     } catch {
-      alert("Failed to save");
+      alert("Failed to save changes");
     }
   };
 
   const deleteArticle = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this article?")) return;
+    if (!confirm("Are you sure you want to delete this article? It will be permanently removed from its Daily Digest, and empty categories will be cleaned up.")) return;
     try {
       await fetch(`/api/admin/articles/${id}`, { method: "DELETE" });
       load();
     } catch {
-      alert("Failed to delete");
+      alert("Failed to delete article");
     }
   };
 
   const toggleStatus = async (article: Article) => {
+    setUpdatingId(article.id);
     const newStatus = article.status === "published" ? "draft" : "published";
     try {
       await fetch(`/api/admin/articles/${article.id}`, {
@@ -1072,10 +1205,11 @@ function ArticlesTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
-      load();
+      await load();
     } catch {
-      alert("Failed to update");
+      alert("Failed to update status");
     }
+    setUpdatingId(null);
   };
 
   if (loading) {
@@ -1087,9 +1221,11 @@ function ArticlesTab() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
         <div>
           <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Articles ({articles.length})</h2>
-          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>Manage, edit, and control published articles.</p>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+            Manage, edit, publish/draft, and delete intelligence stories.
+          </p>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={load}><RefreshCw size={13} /></button>
+        <button className="btn btn-ghost btn-sm" onClick={load} title="Refresh"><RefreshCw size={13} /></button>
       </div>
 
       {/* Edit Modal */}
@@ -1111,7 +1247,7 @@ function ArticlesTab() {
               </div>
               <div>
                 <label className="label">Content (Markdown)</label>
-                <textarea className="textarea" rows={15} value={editForm.content || ""} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} />
+                <textarea className="textarea" rows={12} value={editForm.content || ""} onChange={(e) => setEditForm({ ...editForm, content: e.target.value })} />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                 <div>
@@ -1146,7 +1282,11 @@ function ArticlesTab() {
               <div style={{ flex: 1, minWidth: "200px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem", flexWrap: "wrap" }}>
                   <span className="badge" style={{ fontSize: "0.7rem" }}>{article.categoryName}</span>
-                  <PublishBadge status={article.status} />
+                  <StatusBadge
+                    status={article.status}
+                    onToggle={() => toggleStatus(article)}
+                    disabled={updatingId === article.id}
+                  />
                 </div>
                 <h4 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.2rem" }}>{article.title}</h4>
                 <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
@@ -1157,7 +1297,7 @@ function ArticlesTab() {
                 <button className="btn btn-ghost btn-sm" onClick={() => startEdit(article)} title="Edit Article">
                   <Edit3 size={14} />
                 </button>
-                <button className="btn btn-ghost btn-sm" onClick={() => deleteArticle(article.id)} title="Delete" style={{ color: "var(--color-error)" }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => deleteArticle(article.id)} title="Delete Article" style={{ color: "var(--color-error)" }}>
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -1178,6 +1318,7 @@ function DigestsTab() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<DailyDigest>>({});
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1206,12 +1347,28 @@ function DigestsTab() {
       setEditingId(null);
       load();
     } catch {
-      alert("Failed to save");
+      alert("Failed to save digest");
     }
   };
 
+  const toggleStatus = async (digest: DailyDigest) => {
+    setUpdatingId(digest.id);
+    const newStatus = digest.status === "published" ? "draft" : "published";
+    try {
+      await fetch(`/api/admin/digests/${digest.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      await load();
+    } catch {
+      alert("Failed to update status");
+    }
+    setUpdatingId(null);
+  };
+
   const deleteDigest = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this daily digest?")) return;
+    if (!confirm("Are you sure you want to delete this Daily Digest? Deleting this digest will cascade-delete all linked articles and clean up empty categories.")) return;
     try {
       const res = await fetch(`/api/admin/digests/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -1233,9 +1390,11 @@ function DigestsTab() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
         <div>
           <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Daily Digests ({digests.length})</h2>
-          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>View, edit, and manage daily briefings.</p>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+            View, edit, publish/draft, and manage daily executive briefings.
+          </p>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={load}><RefreshCw size={13} /></button>
+        <button className="btn btn-ghost btn-sm" onClick={load} title="Refresh"><RefreshCw size={13} /></button>
       </div>
 
       {/* Edit Modal */}
@@ -1281,7 +1440,11 @@ function DigestsTab() {
             <div key={digest.id} className="card" style={{ padding: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
-                  <PublishBadge status={digest.status} />
+                  <StatusBadge
+                    status={digest.status}
+                    onToggle={() => toggleStatus(digest)}
+                    disabled={updatingId === digest.id}
+                  />
                 </div>
                 <h4 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.2rem" }}>{digest.title}</h4>
                 <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
@@ -1312,6 +1475,8 @@ function CategoriesTab() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -1339,15 +1504,41 @@ function CategoriesTab() {
     }
   };
 
-  const deleteCategory = async (id: string) => {
-    if (!confirm("Delete this category? Articles in it won't be deleted but will lose their category.")) return;
+  const startRename = (cat: Category) => {
+    setEditingId(cat.id);
+    setEditName(cat.name);
+  };
+
+  const saveRename = async () => {
+    if (!editingId || !editName.trim()) return;
     try {
-      await fetch("/api/admin/categories", {
-        method: "POST",
+      const res = await fetch(`/api/admin/categories/${editingId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "delete", id }),
+        body: JSON.stringify({ name: editName.trim() }),
       });
-      load();
+      if (res.ok) {
+        setEditingId(null);
+        load();
+      } else {
+        alert("Failed to rename category");
+      }
+    } catch {
+      alert("Failed to rename category");
+    }
+  };
+
+  const deleteCategory = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete "${name}"? Deleting this category will cascade-delete ALL articles in it and update associated Daily Digests.`)) return;
+    try {
+      const res = await fetch(`/api/admin/categories/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        load();
+      } else {
+        alert("Failed to delete category");
+      }
     } catch {
       alert("Failed to delete category");
     }
@@ -1358,8 +1549,16 @@ function CategoriesTab() {
   }
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: "600px" }}>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1.5rem" }}>Categories ({categories.length})</h2>
+    <div className="animate-fade-in" style={{ maxWidth: "650px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+        <div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Categories ({categories.length})</h2>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+            Manage categories, rename topics, and review published story counts.
+          </p>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={load} title="Refresh"><RefreshCw size={13} /></button>
+      </div>
 
       {/* Add Category */}
       <div className="card" style={{ padding: "1rem", marginBottom: "1.5rem", display: "flex", gap: "0.5rem" }}>
@@ -1373,6 +1572,29 @@ function CategoriesTab() {
         <button className="btn btn-primary btn-sm" onClick={addCategory}>Add</button>
       </div>
 
+      {/* Rename Modal */}
+      {editingId && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", justifyContent: "center", alignItems: "center", padding: "1rem" }}>
+          <div className="card animate-fade-in" style={{ maxWidth: "450px", width: "100%", padding: "1.5rem" }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.75rem" }}>Rename Category</h3>
+            <p style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)", marginBottom: "1rem" }}>
+              Renaming will automatically update all existing articles and Daily Digest highlights in this category.
+            </p>
+            <input
+              className="input"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveRename()}
+              autoFocus
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.25rem" }}>
+              <button className="btn btn-secondary" onClick={() => setEditingId(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={saveRename}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {categories.length === 0 ? (
         <div className="card" style={{ textAlign: "center", padding: "2rem" }}>
           <p style={{ color: "var(--color-text-secondary)" }}>No categories yet. They will be auto-created by the pipeline.</p>
@@ -1380,16 +1602,21 @@ function CategoriesTab() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
           {categories.map((cat) => (
-            <div key={cat.id} className="card" style={{ padding: "0.75rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div key={cat.id} className="card" style={{ padding: "0.85rem 1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem" }}>
               <div>
-                <h4 style={{ fontSize: "0.9rem", fontWeight: 600 }}>{cat.name}</h4>
+                <h4 style={{ fontSize: "0.95rem", fontWeight: 600 }}>{cat.name}</h4>
                 <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
-                  {cat.articleCount} articles - /{cat.slug}
+                  {cat.articleCount ?? 0} published stories • /{cat.slug}
                 </p>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => deleteCategory(cat.id)} style={{ color: "var(--color-error)" }}>
-                <Trash2 size={14} />
-              </button>
+              <div style={{ display: "flex", gap: "0.4rem" }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => startRename(cat)} title="Rename Category">
+                  <Edit3 size={14} />
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => deleteCategory(cat.id, cat.name)} title="Delete Category" style={{ color: "var(--color-error)" }}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -1397,3 +1624,4 @@ function CategoriesTab() {
     </div>
   );
 }
+

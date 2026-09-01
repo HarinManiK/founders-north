@@ -1,11 +1,11 @@
 // ---------------------------------------------------------------------------
-// Founders North - Single Digest API (Admin)
+// Founders North - Single Category API (Admin)
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { getDigest, updateDigest } from "@/lib/db";
-import { syncDigestStatus, cascadeDeleteDigest } from "@/lib/integrity";
+import { renameCategoryCascade, cascadeDeleteCategory } from "@/lib/integrity";
+import { getCategoryBySlug } from "@/lib/db";
 
 export async function GET(
   request: NextRequest,
@@ -17,14 +17,14 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const digest = await getDigest(id);
-    if (!digest) {
-      return NextResponse.json({ error: "Digest not found" }, { status: 404 });
+    const category = await getCategoryBySlug(id);
+    if (!category) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
-    return NextResponse.json(digest);
+    return NextResponse.json(category);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch digest" },
+      { error: error instanceof Error ? error.message : "Failed to fetch category" },
       { status: 500 }
     );
   }
@@ -40,32 +40,18 @@ export async function PUT(
   const { id } = await params;
 
   try {
-    const existing = await getDigest(id);
-    if (!existing) {
-      return NextResponse.json({ error: "Digest not found" }, { status: 404 });
-    }
-
     const body = await request.json();
-    const allowedFields = ["title", "summary", "highlights", "status"];
+    const newName = (body.name || "").trim();
 
-    const updates: Record<string, unknown> = {};
-    for (const field of allowedFields) {
-      if (field in body) {
-        updates[field] = body[field];
-      }
+    if (!newName) {
+      return NextResponse.json({ error: "Category name is required" }, { status: 400 });
     }
 
-    await updateDigest(id, updates);
-
-    // If status changed, perform cascading sync to all linked articles and categories
-    if (body.status && body.status !== existing.status) {
-      await syncDigestStatus(id, body.status as "published" | "draft");
-    }
-
-    return NextResponse.json({ success: true });
+    const result = await renameCategoryCascade(id, newName);
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to update digest" },
+      { error: error instanceof Error ? error.message : "Failed to update category" },
       { status: 500 }
     );
   }
@@ -81,11 +67,11 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const result = await cascadeDeleteDigest(id);
+    const result = await cascadeDeleteCategory(id);
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete digest" },
+      { error: error instanceof Error ? error.message : "Failed to delete category" },
       { status: 500 }
     );
   }

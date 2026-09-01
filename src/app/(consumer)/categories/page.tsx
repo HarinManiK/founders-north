@@ -46,13 +46,15 @@ export default async function CategoriesPage() {
     // Firestore not configured
   }
 
+  const visibleCategories = categories.filter((c) => (c.articleCount ?? 0) > 0);
+
   const collectionJsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: "Articles & Categories - Founders North",
     url: `${SITE_URL}/categories`,
     description: "Browse curated articles and news topics curated from top industry newsletters.",
-    hasPart: categories.map((cat) => ({
+    hasPart: visibleCategories.map((cat) => ({
       "@type": "WebPage",
       name: cat.name,
       url: `${SITE_URL}/category/${cat.slug}`,
@@ -74,11 +76,11 @@ export default async function CategoriesPage() {
           </p>
         </div>
 
-        {categories.length === 0 ? (
+        {visibleCategories.length === 0 ? (
           <div className="card" style={{ textAlign: "center", padding: "3rem 2rem" }}>
             <FolderOpen size={40} style={{ color: "var(--color-text-tertiary)", margin: "0 auto 1rem" }} />
             <p style={{ color: "var(--color-text-secondary)" }}>
-              No categories yet. Categories will be automatically created when articles are generated.
+              No articles published yet. Check back soon for curated intelligence!
             </p>
           </div>
         ) : (
@@ -90,7 +92,7 @@ export default async function CategoriesPage() {
               alignItems: "stretch",
             }}
           >
-            {categories.map((cat) => (
+            {visibleCategories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/category/${cat.slug}`}

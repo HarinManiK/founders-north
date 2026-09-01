@@ -4,7 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { getArticle, updateArticle, deleteArticle } from "@/lib/db";
+import { getArticle, updateArticle } from "@/lib/db";
+import { syncArticleStatus, cascadeDeleteArticle, syncCategoryState } from "@/lib/integrity";
 
 export async function GET(
   request: NextRequest,
@@ -39,8 +40,12 @@ export async function PUT(
   const { id } = await params;
 
   try {
+    const existing = await getArticle(id);
+    if (!existing) {
+      return NextResponse.json({ error: "Article not found" }, { status: 404 });
+    }
+
     const body = await request.json();
-    // Only allow updating specific fields
     const allowedFields = [
       "title",
       "slug",
@@ -61,14 +66,21 @@ export async function PUT(
       }
     }
 
-    if (
-      body.status === "published" &&
-      !(await getArticle(id))?.publishedAt
-    ) {
+    if (body.status === "published" && !existing.publishedAt) {
       updates.publishedAt = new Date().toISOString();
     }
 
     await updateArticle(id, updates);
+
+    // If status changed, perform cascading sync with digests and categories
+    if (body.status && body.status !== existing.status) {
+      await syncArticleStatus(id, body.status as "published" | "draft");
+    } else if (body.categoryId && body.categoryId !== existing.categoryId) {
+      // If category changed, sync both old and new category counts
+      if (existing.categoryId) await syncCategoryState(existing.categoryId);
+      await syncCategoryState(body.categoryId);
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
@@ -88,8 +100,8 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    await deleteArticle(id);
-    return NextResponse.json({ success: true });
+    const result = await cascadeDeleteArticle(id);
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to delete article" },
