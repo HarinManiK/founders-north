@@ -41,29 +41,22 @@ export default async function HomePage() {
         <div className="container-main">
           {latestDigest ? (
             <Link href={`/digests/${latestDigest.slug}`} style={{ textDecoration: "none" }}>
-              <div
-                className="card card-interactive"
-                style={{
-                  background: "linear-gradient(135deg, var(--color-accent-light), var(--color-bg-card))",
-                  padding: "1.5rem",
-                  borderLeft: "4px solid var(--color-accent)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
-                  <BookOpen size={16} style={{ color: "var(--color-accent)" }} />
-                  <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--color-accent)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    Today&apos;s Daily Briefing
+              <div className="card card-interactive hero-digest-card">
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                  <BookOpen size={15} style={{ color: "var(--color-accent)" }} />
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--color-accent)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    Daily Briefing
                   </span>
                 </div>
-                <h1 style={{ marginBottom: "0.75rem", lineHeight: 1.3 }}>
+                <h1 style={{ marginBottom: "0.5rem", lineHeight: 1.25 }}>
                   {latestDigest.title}
                 </h1>
-                <p style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)", lineHeight: 1.7, marginBottom: "1.25rem" }}>
+                <p className="hero-digest-summary">
                   {latestDigest.summary}
                 </p>
                 {latestDigest.highlights && latestDigest.highlights.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1.25rem" }}>
-                    {latestDigest.highlights.slice(0, 4).map((h, i) => (
+                  <div className="hero-highlights-list">
+                    {latestDigest.highlights.slice(0, 3).map((h, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "0.5rem" }}>
                         <span style={{ color: "var(--color-accent)", fontWeight: 700, fontSize: "0.85rem", minWidth: "1.2rem" }}>{i + 1}.</span>
                         <span style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", lineHeight: 1.5 }}>{h.title}</span>
@@ -71,8 +64,8 @@ export default async function HomePage() {
                     ))}
                   </div>
                 )}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--color-accent)", fontSize: "0.875rem", fontWeight: 600 }}>
-                  Read full executive digest <ArrowRight size={14} />
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--color-accent)", fontSize: "0.82rem", fontWeight: 600 }}>
+                  Read full briefing <ArrowRight size={13} />
                 </div>
               </div>
             </Link>

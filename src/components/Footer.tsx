@@ -141,19 +141,8 @@ export default function Footer() {
               color: "var(--color-text-tertiary)",
             }}
           >
-            {new Date().getFullYear()} Founders North
+            © {new Date().getFullYear()} Founders North. All rights reserved.
           </p>
-          <Link
-            href="/admin"
-            style={{
-              fontSize: "0.75rem",
-              color: "var(--color-text-tertiary)",
-              textDecoration: "none",
-              opacity: 0.5,
-            }}
-          >
-            Admin
-          </Link>
         </div>
       </div>
     </footer>
