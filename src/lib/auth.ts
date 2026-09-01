@@ -5,7 +5,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const ADMIN_PASSWORD = "founder19North*";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "founder19North*";
 const COOKIE_NAME = "fn_admin_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
