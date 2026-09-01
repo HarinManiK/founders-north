@@ -753,20 +753,20 @@ function SettingsTab() {
     setSaving(false);
   };
 
-  const testTriggerAction = async () => {
+  const handleAction = async (actionType: "verify" | "dispatch") => {
     setTestingTrigger(true);
     setTestResult(null);
     try {
       const res = await fetch("/api/admin/pipeline/trigger-workflow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ action: actionType }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setTestResult({ success: true, message: data.message || "✓ GitHub Actions connected & ready!" });
+        setTestResult({ success: true, message: data.message || "✓ Action completed successfully!" });
       } else {
-        setTestResult({ success: false, message: `Error: ${data.error || "Connection failed"}` });
+        setTestResult({ success: false, message: `Error: ${data.error || "Action failed"}` });
       }
     } catch (e: unknown) {
       setTestResult({ success: false, message: `Error: ${e instanceof Error ? e.message : "Network failure"}` });
@@ -936,17 +936,28 @@ function SettingsTab() {
             />
           </div>
 
-          {/* Test Connection Button */}
-          <div style={{ paddingTop: "0.85rem", borderTop: "1px solid var(--color-border-light)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={testTriggerAction}
-              disabled={testingTrigger}
-              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-            >
-              {testingTrigger ? <Loader2 className="animate-spin" size={14} /> : <Activity size={14} />}
-              {testingTrigger ? "Testing..." : "Test Connection"}
-            </button>
+          {/* Action Buttons */}
+          <div style={{ paddingTop: "0.85rem", borderTop: "1px solid var(--color-border-light)", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => handleAction("verify")}
+                disabled={testingTrigger}
+                style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+              >
+                {testingTrigger ? <Loader2 className="animate-spin" size={14} /> : <Activity size={14} />}
+                Test Connection
+              </button>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => handleAction("dispatch")}
+                disabled={testingTrigger}
+                style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+              >
+                {testingTrigger ? <Loader2 className="animate-spin" size={14} /> : <Play size={14} />}
+                Run in Cloud Now
+              </button>
+            </div>
             {testResult && (
               <span style={{ fontSize: "0.8rem", color: testResult.success ? "var(--color-success)" : "var(--color-error)" }}>
                 {testResult.message}
