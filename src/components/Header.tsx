@@ -30,7 +30,7 @@ export default function Header() {
   };
 
   const navLinks = [
-    { href: "/", label: "Home" },
+    { href: "/", label: "Home", hideOnMobile: true },
     { href: "/digests", label: "Digests" },
     { href: "/categories", label: "Articles" },
   ];
@@ -57,18 +57,19 @@ export default function Header() {
           alignItems: "center",
           justifyContent: "space-between",
           height: "56px",
-          gap: "0.25rem",
+          gap: "0.5rem",
           width: "100%",
           boxSizing: "border-box",
         }}
       >
-        {/* Brand Logo */}
+        {/* Brand Logo & Home Button */}
         <Link
           href="/"
+          aria-label="Founders North Home"
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.4rem",
+            gap: "0.45rem",
             fontFamily: "'Plus Jakarta Sans', sans-serif",
             fontSize: "1.05rem",
             fontWeight: 800,
@@ -89,12 +90,12 @@ export default function Header() {
           <span className="brand-title">Founders North</span>
         </Link>
 
-        {/* Direct Navigation Links (Visible on all devices) */}
+        {/* Direct Navigation Links (Home hidden on mobile, Digests & Articles visible) */}
         <nav
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "0.3rem",
+            gap: "0.4rem",
             flexShrink: 0,
           }}
         >
@@ -106,7 +107,9 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`nav-link-pill ${isActive ? "active" : ""}`}
+                className={`nav-link-pill ${isActive ? "active" : ""} ${
+                  link.hideOnMobile ? "hide-on-mobile" : ""
+                }`}
               >
                 {link.label}
               </Link>
