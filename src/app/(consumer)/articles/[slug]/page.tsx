@@ -57,18 +57,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+import { formatISTDateLong } from "@/lib/timezone";
+
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
 
-  const date = new Date(article.publishedAt);
-  const dateStr = date.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const dateStr = formatISTDateLong(article.publishedAt || article.createdAt);
 
   // Get related articles from same category
   let relatedArticles: Awaited<ReturnType<typeof getPublishedArticles>> = [];

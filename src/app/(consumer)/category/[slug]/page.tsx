@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { getCategoryBySlug, getArticlesByCategory } from "@/lib/db";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft, Clock, ChevronRight } from "lucide-react";
 import { getSiteUrl } from "@/lib/site";
+import { formatISTDateMedium } from "@/lib/timezone";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -55,19 +56,24 @@ export default async function CategoryPage({ params }: Props) {
   const category = await getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const articles = await getArticlesByCategory(category.id, 50);
+  let articles: Awaited<ReturnType<typeof getArticlesByCategory>> = [];
+  try {
+    articles = await getArticlesByCategory(category.id, 50);
+  } catch {
+    // Firestore not configured
+  }
 
   const categoryJsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `${category.name} - Founders North`,
+    name: `${category.name} Articles - Founders North`,
     url: `${SITE_URL}/category/${category.slug}`,
-    description: `Articles and curated topics in ${category.name}.`,
-    hasPart: articles.map((a) => ({
+    description: `Latest articles, analysis, and news in ${category.name}.`,
+    hasPart: articles.map((art) => ({
       "@type": "NewsArticle",
-      name: a.title,
-      url: `${SITE_URL}/articles/${a.slug}`,
-      datePublished: a.publishedAt,
+      headline: art.title,
+      url: `${SITE_URL}/articles/${art.slug}`,
+      datePublished: art.publishedAt,
     })),
   };
 
@@ -84,7 +90,7 @@ export default async function CategoryPage({ params }: Props) {
       {
         "@type": "ListItem",
         position: 2,
-        name: "Articles",
+        name: "Categories",
         item: `${SITE_URL}/categories`,
       },
       {
@@ -98,7 +104,7 @@ export default async function CategoryPage({ params }: Props) {
 
   return (
     <div className="animate-fade-in" style={{ padding: "2rem 0 3rem" }}>
-      {/* Invisible Structured Data Schemas for Search Engines & AI Search */}
+      {/* Invisible Structured Data Schemas */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(categoryJsonLd) }}
@@ -108,25 +114,18 @@ export default async function CategoryPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbsJsonLd) }}
       />
       <div className="container-main">
-        <Link
-          href="/categories"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.4rem",
-            fontSize: "0.85rem",
-            color: "var(--color-text-tertiary)",
-            textDecoration: "none",
-            marginBottom: "1.5rem",
-          }}
-        >
-          <ArrowLeft size={14} /> All Categories
-        </Link>
+        {/* Breadcrumbs */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem", color: "var(--color-text-tertiary)", marginBottom: "1.25rem" }}>
+          <Link href="/" style={{ color: "var(--color-text-tertiary)", textDecoration: "none" }}>Home</Link>
+          <ChevronRight size={14} />
+          <Link href="/categories" style={{ color: "var(--color-text-tertiary)", textDecoration: "none" }}>Categories</Link>
+          <ChevronRight size={14} />
+          <span style={{ color: "var(--color-text-primary)", fontWeight: 600 }}>{category.name}</span>
+        </div>
 
-        <div style={{ marginBottom: "2rem" }}>
-          <span className="badge" style={{ marginBottom: "0.5rem" }}>{category.name}</span>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.25rem" }}>{category.name}</h1>
-          <p style={{ fontSize: "0.9rem", color: "var(--color-text-tertiary)" }}>
+        <div style={{ marginBottom: "1.75rem" }}>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.4rem" }}>{category.name}</h1>
+          <p style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
             {articles.length} {articles.length === 1 ? "article" : "articles"}
           </p>
         </div>
@@ -138,8 +137,7 @@ export default async function CategoryPage({ params }: Props) {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {articles.map((article) => {
-              const date = new Date(article.publishedAt);
-              const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+              const dateStr = formatISTDateMedium(article.publishedAt || article.createdAt);
 
               return (
                 <Link key={article.id} href={`/articles/${article.slug}`} style={{ textDecoration: "none" }}>

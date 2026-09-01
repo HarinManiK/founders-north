@@ -145,6 +145,8 @@ export default async function HomePage() {
   );
 }
 
+import { formatISTDateShort } from "@/lib/timezone";
+
 function ArticleCard({
   article,
 }: {
@@ -159,8 +161,7 @@ function ArticleCard({
     importanceScore: number;
   };
 }) {
-  const date = new Date(article.publishedAt);
-  const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const dateStr = formatISTDateShort(article.publishedAt);
 
   return (
     <Link href={`/articles/${article.slug}`} style={{ textDecoration: "none", display: "flex", height: "100%", width: "100%" }}>
@@ -228,8 +229,7 @@ function ArticleRow({
     publishedAt: string;
   };
 }) {
-  const date = new Date(article.publishedAt);
-  const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const dateStr = formatISTDateShort(article.publishedAt);
 
   return (
     <Link href={`/articles/${article.slug}`} style={{ textDecoration: "none" }}>

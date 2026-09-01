@@ -57,6 +57,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+import { formatISTDateLong } from "@/lib/timezone";
+
 export default async function DigestPage({ params }: Props) {
   const { slug } = await params;
   const digest = await getDigestBySlug(slug);
@@ -69,13 +71,7 @@ export default async function DigestPage({ params }: Props) {
     // ignore
   }
 
-  const date = new Date(digest.publishedAt);
-  const dateStr = date.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const dateStr = formatISTDateLong(digest.publishedAt || digest.date || digest.createdAt);
 
   const publishedSlugs = new Set(allArticles.map((a) => a.slug));
   const publishedTitles = allArticles.map((a) => a.title.toLowerCase());

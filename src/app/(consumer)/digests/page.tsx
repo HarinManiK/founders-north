@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getAllDigests } from "@/lib/db";
 import { BookOpen, ArrowRight } from "lucide-react";
+import { formatISTDateLong } from "@/lib/timezone";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -37,41 +38,41 @@ export const metadata: Metadata = {
 };
 
 export default async function DigestsPage() {
-  let digests: Awaited<ReturnType<typeof getAllDigests>> = [];
+  let digests: any[] = [];
 
   try {
-    const all = await getAllDigests(50);
+    const all = await getAllDigests(30);
     digests = all.filter((d) => d.status === "published");
   } catch {
     // Firestore not configured
   }
 
-  const digestsJsonLd = {
+  const collectionJsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Daily Executive Digests - Founders North",
+    name: "Daily Intelligence Briefings - Founders North",
     url: `${SITE_URL}/digests`,
-    description: "Your daily briefing archive. Each digest summarizes the key stories and developments.",
-    hasPart: digests.map((d) => ({
+    description: "Daily curated intelligence briefings summarizing key startup, tech, and AI news.",
+    hasPart: digests.map((digest) => ({
       "@type": "Report",
-      name: d.title,
-      url: `${SITE_URL}/digests/${d.slug}`,
-      datePublished: d.publishedAt,
+      headline: digest.title,
+      url: `${SITE_URL}/digests/${digest.slug}`,
+      datePublished: digest.publishedAt,
     })),
   };
 
   return (
-    <div className="animate-fade-in" style={{ padding: "2.5rem 0 3rem" }}>
+    <div className="animate-fade-in" style={{ padding: "2rem 0 3rem" }}>
       {/* Invisible Structured Data Schema */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(digestsJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
       />
       <div className="container-main">
-        <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.5rem" }}>Daily Digests</h1>
+        <div style={{ marginBottom: "1.75rem" }}>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.4rem" }}>Daily Briefings</h1>
           <p style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
-            Your daily briefing archive. Each digest summarizes the key stories and developments.
+            Archive of daily intelligence briefings summarizing the most important stories across tech and business.
           </p>
         </div>
 
@@ -85,13 +86,7 @@ export default async function DigestsPage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {digests.map((digest) => {
-              const date = new Date(digest.publishedAt);
-              const dateStr = date.toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              });
+              const dateStr = formatISTDateLong(digest.publishedAt || digest.date || digest.createdAt);
 
               return (
                 <Link key={digest.id} href={`/digests/${digest.slug}`} style={{ textDecoration: "none" }}>

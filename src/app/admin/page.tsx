@@ -34,6 +34,11 @@ import type {
   PipelineRun,
   RunLogMessage,
 } from "@/types";
+import {
+  formatISTDateTime,
+  formatISTDateMedium,
+  formatISTTime,
+} from "@/lib/timezone";
 
 type Tab = "pipeline" | "settings" | "prompts" | "articles" | "digests" | "categories";
 
@@ -333,7 +338,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
   const copyLogs = () => {
     if (!selectedRun?.logs) return;
     const text = (selectedRun.logs as RunLogMessage[])
-      .map((l) => `[${new Date(l.timestamp).toLocaleTimeString()}] [${l.level.toUpperCase()}] ${l.message}`)
+      .map((l) => `[${formatISTTime(l.timestamp)}] [${l.level.toUpperCase()}] ${l.message}`)
       .join("\n");
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -366,7 +371,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
               Run Details: <span style={{ fontFamily: "monospace", fontSize: "1.05rem", fontWeight: 500, color: "var(--color-text-secondary)" }}>{selectedRunId}</span>
             </h2>
             <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
-              {selectedRun?.startedAt ? `Started on ${new Date(selectedRun.startedAt).toLocaleString()}` : "Loading run information..."}
+              {selectedRun?.startedAt ? `Started on ${formatISTDateTime(selectedRun.startedAt)} (IST)` : "Loading run information..."}
             </p>
           </div>
 
@@ -545,7 +550,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
               }}
             >
               {(selectedRun.logs as RunLogMessage[]).map((log, i) => {
-                const time = new Date(log.timestamp).toLocaleTimeString();
+                const time = formatISTTime(log.timestamp);
                 return (
                   <div key={i} className={`log-${log.level}`} style={{ marginBottom: "0.25rem", wordBreak: "break-word" }}>
                     <span style={{ opacity: 0.45, marginRight: "0.5rem" }}>[{time}]</span>
@@ -640,7 +645,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
                     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
                       <RunStatusBadge status={run.status} />
                       <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>
-                        {start.toLocaleString()}
+                        {formatISTDateTime(start)}
                       </span>
                       <span style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
                         ({stageLabels[run.currentStage] || run.currentStage})
@@ -1290,7 +1295,7 @@ function ArticlesTab() {
                 </div>
                 <h4 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.2rem" }}>{article.title}</h4>
                 <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
-                  {new Date(article.createdAt).toLocaleDateString()} - {article.readTimeMinutes} min read
+                  {formatISTDateMedium(article.createdAt)} - {article.readTimeMinutes} min read
                 </p>
               </div>
               <div style={{ display: "flex", gap: "0.4rem" }}>
