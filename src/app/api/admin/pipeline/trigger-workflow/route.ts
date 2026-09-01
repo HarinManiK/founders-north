@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSettings } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 
+const DEFAULT_GITHUB_REPO = "HarinManiK/founders-north";
+
 export async function POST(request: NextRequest) {
   const authed = await isAuthenticated();
   if (!authed) {
@@ -12,12 +14,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const settings = await getSettings();
 
-    const githubToken = (body.githubToken || settings.automation?.githubToken || process.env.GITHUB_PAT || "").trim();
-    const githubRepo = (body.githubRepo || settings.automation?.githubRepo || "HarinManiK/founders-north").trim();
+    const githubToken = (
+      process.env.GITHUB_PAT ||
+      body.githubToken ||
+      settings.automation?.githubToken ||
+      ""
+    ).trim();
+
+    const githubRepo = (
+      body.githubRepo ||
+      settings.automation?.githubRepo ||
+      DEFAULT_GITHUB_REPO
+    ).trim();
 
     if (!githubToken) {
       return NextResponse.json(
-        { error: "GitHub Personal Access Token is required to dispatch the GitHub Action." },
+        { error: "GitHub PAT token is not configured in GITHUB_PAT environment variable or database." },
         { status: 400 }
       );
     }
@@ -45,7 +57,7 @@ export async function POST(request: NextRequest) {
     if (response.status === 204) {
       return NextResponse.json({
         success: true,
-        message: "GitHub Action workflow successfully triggered! The runner has started.",
+        message: "✓ Runner started successfully! Check the Runs tab.",
         repo: githubRepo,
       });
     }
@@ -55,7 +67,7 @@ export async function POST(request: NextRequest) {
       {
         error:
           errorData.message ||
-          `GitHub API responded with status ${response.status}: ${response.statusText}`,
+          `GitHub API returned ${response.status}: ${response.statusText}`,
       },
       { status: response.status || 500 }
     );

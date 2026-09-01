@@ -720,7 +720,6 @@ function SettingsTab() {
   const [saved, setSaved] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [showGhToken, setShowGhToken] = useState(false);
   const [testingTrigger, setTestingTrigger] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
@@ -760,14 +759,11 @@ function SettingsTab() {
       const res = await fetch("/api/admin/pipeline/trigger-workflow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          githubToken: settings?.automation?.githubToken,
-          githubRepo: settings?.automation?.githubRepo,
-        }),
+        body: JSON.stringify({}),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setTestResult({ success: true, message: "✓ GitHub Action triggered successfully! Check the Runs tab or GitHub Actions." });
+        setTestResult({ success: true, message: "✓ Runner started successfully! Check the Runs tab." });
       } else {
         setTestResult({ success: false, message: `Error: ${data.error || "Failed to trigger"}` });
       }
@@ -782,45 +778,132 @@ function SettingsTab() {
   }
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: "600px" }}>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1.5rem" }}>Mailbox, API & Automation Settings</h2>
+    <div className="animate-fade-in" style={{ maxWidth: "1050px" }}>
+      {/* Top Header with Save Button */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+        <div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Settings</h2>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+            Configure your AI provider, newsletter mailbox, and daily automated schedule.
+          </p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <button className="btn btn-primary" onClick={save} disabled={saving} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+            Save Settings
+          </button>
+          {saved && (
+            <span style={{ fontSize: "0.85rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+              <CheckCircle size={14} /> Saved
+            </span>
+          )}
+        </div>
+      </div>
 
-      {/* Automated Scheduled Runs */}
-      <div className="card" style={{ marginBottom: "1.5rem", padding: "1.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
-          <div>
-            <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Automated Scheduled Runs</h3>
-            <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
-              Autonomous execution via GitHub Actions (Zero serverless timeouts, $0 cost).
-            </p>
+      {/* 2-Column Responsive Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "1.5rem", alignItems: "start" }}>
+        {/* Row 1 Left: OpenRouter API */}
+        <div className="card" style={{ padding: "1.5rem" }}>
+          <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>OpenRouter API</h3>
+          <div style={{ marginBottom: "1rem" }}>
+            <label className="label">API Key</label>
+            <div style={{ position: "relative" }}>
+              <input
+                className="input"
+                type={showApiKey ? "text" : "password"}
+                value={settings.openrouter.apiKey}
+                onChange={(e) => setSettings({ ...settings, openrouter: { ...settings.openrouter, apiKey: e.target.value } })}
+                placeholder="sk-or-v1-..."
+                style={{ paddingRight: "2.5rem" }}
+              />
+              <button
+                className="btn-ghost"
+                style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", padding: "0.25rem" }}
+                onClick={() => setShowApiKey(!showApiKey)}
+              >
+                {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
-          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}>
+          <div>
+            <label className="label">Model</label>
             <input
-              type="checkbox"
-              checked={settings.automation?.enabled ?? false}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  automation: {
-                    ...(settings.automation || {
-                      time: "07:30",
-                      timezone: "Asia/Kolkata",
-                      githubToken: "",
-                      githubRepo: "HarinManiK/founders-north",
-                    }),
-                    enabled: e.target.checked,
-                  },
-                })
-              }
-              style={{ width: "16px", height: "16px", cursor: "pointer" }}
+              className="input"
+              value={settings.openrouter.model}
+              onChange={(e) => setSettings({ ...settings, openrouter: { ...settings.openrouter, model: e.target.value } })}
+              placeholder="google/gemini-3.5-flash-lite"
             />
-            {settings.automation?.enabled ? "Enabled" : "Disabled"}
-          </label>
+          </div>
         </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label className="label">Scheduled Run Time (IST)</label>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        {/* Row 1 Right: IMAP Mailbox */}
+        <div className="card" style={{ padding: "1.5rem" }}>
+          <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>IMAP Mailbox</h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", padding: "0.5rem 0.75rem", background: "var(--color-accent-light)", borderRadius: "8px", fontSize: "0.8rem" }}>
+            <AlertCircle size={14} style={{ color: "var(--color-accent)" }} />
+            <span style={{ color: "var(--color-text-secondary)" }}>
+              For Gmail, use an App Password:{" "}
+              <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-accent)", fontWeight: 600 }}>
+                Get App Password <ExternalLink size={11} style={{ display: "inline", verticalAlign: "middle" }} />
+              </a>
+            </span>
+          </div>
+          <div style={{ marginBottom: "1rem" }}>
+            <label className="label">Email Address</label>
+            <input className="input" type="email" value={settings.imap.user} onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, user: e.target.value } })} placeholder="your@gmail.com" />
+          </div>
+          <div>
+            <label className="label">App Password / IMAP Password</label>
+            <div style={{ position: "relative" }}>
+              <input
+                className="input"
+                type={showPass ? "text" : "password"}
+                value={settings.imap.pass}
+                onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, pass: e.target.value } })}
+                placeholder="xxxx xxxx xxxx xxxx"
+                style={{ paddingRight: "2.5rem" }}
+              />
+              <button
+                className="btn-ghost"
+                style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", padding: "0.25rem" }}
+                onClick={() => setShowPass(!showPass)}
+              >
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2 Left: Automated Scheduled Runs */}
+        <div className="card" style={{ padding: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.5rem" }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Automated Scheduled Runs</h3>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}>
+              <input
+                type="checkbox"
+                checked={settings.automation?.enabled ?? false}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    automation: {
+                      ...(settings.automation || {
+                        time: "07:30",
+                        timezone: "Asia/Kolkata",
+                        githubToken: "",
+                        githubRepo: "HarinManiK/founders-north",
+                      }),
+                      enabled: e.target.checked,
+                    },
+                  })
+                }
+                style={{ width: "16px", height: "16px", cursor: "pointer" }}
+              />
+              {settings.automation?.enabled ? "Enabled" : "Disabled"}
+            </label>
+          </div>
+
+          <div style={{ marginBottom: "1.25rem" }}>
+            <label className="label">Scheduled Run Time (IST)</label>
             <input
               className="input"
               type="time"
@@ -841,175 +924,26 @@ function SettingsTab() {
               }
               style={{ maxWidth: "160px" }}
             />
-            <span style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
-              Runs at this exact time (24-hour lookback)
-            </span>
           </div>
-        </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label className="label">GitHub Personal Access Token (PAT)</label>
-          <div style={{ position: "relative" }}>
-            <input
-              className="input"
-              type={showGhToken ? "text" : "password"}
-              value={settings.automation?.githubToken || ""}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  automation: {
-                    ...(settings.automation || {
-                      enabled: false,
-                      time: "07:30",
-                      timezone: "Asia/Kolkata",
-                      githubRepo: "HarinManiK/founders-north",
-                    }),
-                    githubToken: e.target.value,
-                  },
-                })
-              }
-              placeholder="github_pat_..."
-              style={{ paddingRight: "2.5rem" }}
-            />
+          {/* Test Trigger Button */}
+          <div style={{ paddingTop: "0.85rem", borderTop: "1px solid var(--color-border-light)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
             <button
-              className="btn-ghost"
-              style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", padding: "0.25rem" }}
-              onClick={() => setShowGhToken(!showGhToken)}
+              className="btn btn-secondary btn-sm"
+              onClick={testTriggerAction}
+              disabled={testingTrigger}
+              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
             >
-              {showGhToken ? <EyeOff size={16} /> : <Eye size={16} />}
+              {testingTrigger ? <Loader2 className="animate-spin" size={14} /> : <Play size={14} />}
+              {testingTrigger ? "Dispatching..." : "Test Run Trigger"}
             </button>
-          </div>
-          <p style={{ fontSize: "0.75rem", color: "var(--color-text-tertiary)", marginTop: "0.3rem" }}>
-            Requires a GitHub Personal Access Token with <strong>Actions: Write</strong> permission.
-          </p>
-        </div>
-
-        <div style={{ marginBottom: "1.25rem" }}>
-          <label className="label">GitHub Repository</label>
-          <input
-            className="input"
-            value={settings.automation?.githubRepo || "HarinManiK/founders-north"}
-            onChange={(e) =>
-              setSettings({
-                ...settings,
-                automation: {
-                  ...(settings.automation || {
-                    enabled: false,
-                    time: "07:30",
-                    timezone: "Asia/Kolkata",
-                    githubToken: "",
-                  }),
-                  githubRepo: e.target.value,
-                },
-              })
-            }
-            placeholder="owner/repo (e.g. HarinManiK/founders-north)"
-          />
-        </div>
-
-        {/* Test Trigger Button */}
-        <div style={{ paddingTop: "0.75rem", borderTop: "1px solid var(--color-border-light)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={testTriggerAction}
-            disabled={testingTrigger || !settings.automation?.githubToken}
-            style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-          >
-            {testingTrigger ? <Loader2 className="animate-spin" size={14} /> : <Play size={14} />}
-            {testingTrigger ? "Dispatching..." : "Test GitHub Action Runner Now"}
-          </button>
-          {testResult && (
-            <span style={{ fontSize: "0.8rem", color: testResult.success ? "var(--color-success)" : "var(--color-error)" }}>
-              {testResult.message}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* IMAP Settings */}
-      <div className="card" style={{ marginBottom: "1.5rem", padding: "1.5rem" }}>
-        <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>IMAP Mailbox</h3>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", padding: "0.5rem 0.75rem", background: "var(--color-accent-light)", borderRadius: "8px", fontSize: "0.8rem" }}>
-          <AlertCircle size={14} style={{ color: "var(--color-accent)" }} />
-          <span style={{ color: "var(--color-text-secondary)" }}>
-            For Gmail, use an App Password:{" "}
-            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-accent)", fontWeight: 600 }}>
-              Get App Password <ExternalLink size={11} style={{ display: "inline", verticalAlign: "middle" }} />
-            </a>
-          </span>
-        </div>
-
-        <div style={{ marginBottom: "0.75rem" }}>
-          <label className="label">Email Address</label>
-          <input className="input" type="email" value={settings.imap.user} onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, user: e.target.value } })} placeholder="your@gmail.com" />
-        </div>
-        <div>
-          <label className="label">App Password / IMAP Password</label>
-          <div style={{ position: "relative" }}>
-            <input
-              className="input"
-              type={showPass ? "text" : "password"}
-              value={settings.imap.pass}
-              onChange={(e) => setSettings({ ...settings, imap: { ...settings.imap, pass: e.target.value } })}
-              placeholder="xxxx xxxx xxxx xxxx"
-              style={{ paddingRight: "2.5rem" }}
-            />
-            <button
-              className="btn-ghost"
-              style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", padding: "0.25rem" }}
-              onClick={() => setShowPass(!showPass)}
-            >
-              {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
+            {testResult && (
+              <span style={{ fontSize: "0.8rem", color: testResult.success ? "var(--color-success)" : "var(--color-error)" }}>
+                {testResult.message}
+              </span>
+            )}
           </div>
         </div>
-      </div>
-
-      {/* OpenRouter Settings */}
-      <div className="card" style={{ marginBottom: "1.5rem", padding: "1.5rem" }}>
-        <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>OpenRouter API</h3>
-        <div style={{ marginBottom: "0.75rem" }}>
-          <label className="label">API Key</label>
-          <div style={{ position: "relative" }}>
-            <input
-              className="input"
-              type={showApiKey ? "text" : "password"}
-              value={settings.openrouter.apiKey}
-              onChange={(e) => setSettings({ ...settings, openrouter: { ...settings.openrouter, apiKey: e.target.value } })}
-              placeholder="sk-or-v1-..."
-              style={{ paddingRight: "2.5rem" }}
-            />
-            <button
-              className="btn-ghost"
-              style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", padding: "0.25rem" }}
-              onClick={() => setShowApiKey(!showApiKey)}
-            >
-              {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-        </div>
-        <div>
-          <label className="label">Model</label>
-          <input
-            className="input"
-            value={settings.openrouter.model}
-            onChange={(e) => setSettings({ ...settings, openrouter: { ...settings.openrouter, model: e.target.value } })}
-            placeholder="google/gemini-3.5-flash-lite"
-          />
-        </div>
-      </div>
-
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-        <button className="btn btn-primary" onClick={save} disabled={saving} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-          {saving ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
-          Save Settings
-        </button>
-        {saved && (
-          <span style={{ fontSize: "0.85rem", color: "var(--color-success)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-            <CheckCircle size={14} /> Saved
-          </span>
-        )}
       </div>
     </div>
   );

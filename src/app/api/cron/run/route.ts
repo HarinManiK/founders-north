@@ -10,6 +10,8 @@ import { getSettings, createRun } from "@/lib/db";
 import { executePipeline } from "@/lib/pipeline/runner";
 import type { PipelineRun } from "@/types";
 
+const DEFAULT_GITHUB_REPO = "HarinManiK/founders-north";
+
 export async function GET(request: NextRequest) {
   return handleCron(request);
 }
@@ -44,10 +46,15 @@ async function handleCron(request: NextRequest) {
       });
     }
 
-    const githubToken = settings.automation?.githubToken || process.env.GITHUB_PAT;
-    const githubRepo = settings.automation?.githubRepo || "HarinManiK/founders-north";
+    const githubToken =
+      process.env.GITHUB_PAT ||
+      settings.automation?.githubToken ||
+      "";
+    const githubRepo =
+      settings.automation?.githubRepo ||
+      DEFAULT_GITHUB_REPO;
 
-    // If GitHub Token is configured, dispatch to GitHub Actions (Zero serverless timeouts)
+    // If GitHub Token is available, dispatch to GitHub Actions runner
     if (githubToken) {
       const ghRes = await fetch(
         `https://api.github.com/repos/${githubRepo}/actions/workflows/pipeline.yml/dispatches`,
