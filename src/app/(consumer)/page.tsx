@@ -139,8 +139,8 @@ function ArticleCard({
   const dateStr = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
   return (
-    <Link href={`/articles/${article.slug}`} style={{ textDecoration: "none" }}>
-      <div className="card card-interactive" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <Link href={`/articles/${article.slug}`} style={{ textDecoration: "none", display: "flex", height: "100%", width: "100%" }}>
+      <div className="card card-interactive" style={{ height: "100%", width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
           <span className="badge">{article.categoryName}</span>
           {article.importanceScore >= 8 && (

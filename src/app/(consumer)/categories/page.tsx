@@ -20,10 +20,10 @@ export default async function CategoriesPage() {
   }
 
   return (
-    <div className="animate-fade-in" style={{ padding: "2.5rem 0 3rem" }}>
+    <div className="animate-fade-in" style={{ padding: "2rem 0 3rem" }}>
       <div className="container-main">
-        <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.5rem" }}>Articles</h1>
+        <div style={{ marginBottom: "1.75rem" }}>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.4rem" }}>Articles</h1>
           <p style={{ fontSize: "0.95rem", color: "var(--color-text-secondary)" }}>
             Browse articles and news topics curated from top industry newsletters.
           </p>
@@ -37,12 +37,66 @@ export default async function CategoriesPage() {
             </p>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "0.85rem" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+              gap: "1rem",
+              alignItems: "stretch",
+            }}
+          >
             {categories.map((cat) => (
-              <Link key={cat.id} href={`/category/${cat.slug}`} style={{ textDecoration: "none" }}>
-                <div className="card card-interactive" style={{ padding: "1.1rem", textAlign: "center" }}>
-                  <h3 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: "0.3rem" }}>{cat.name}</h3>
-                  <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
+              <Link
+                key={cat.id}
+                href={`/category/${cat.slug}`}
+                style={{ textDecoration: "none", display: "flex", height: "100%", width: "100%" }}
+              >
+                <div
+                  className="card card-interactive"
+                  style={{
+                    padding: "1.25rem 1rem",
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                    minHeight: "135px",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <div
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: "0.95rem",
+                        fontWeight: 700,
+                        lineHeight: 1.35,
+                        margin: 0,
+                        textAlign: "center",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {cat.name}
+                    </h3>
+                  </div>
+
+                  <p
+                    style={{
+                      fontSize: "0.8rem",
+                      color: "var(--color-text-tertiary)",
+                      marginTop: "0.6rem",
+                      marginBottom: 0,
+                      fontWeight: 500,
+                    }}
+                  >
                     {cat.articleCount} {cat.articleCount === 1 ? "story" : "stories"}
                   </p>
                 </div>
