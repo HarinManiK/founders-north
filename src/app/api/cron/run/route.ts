@@ -52,22 +52,26 @@ async function handleCron(request: NextRequest) {
         timeZone: "Asia/Kolkata",
       });
       const nowIST = new Date(istDateStr);
-      const currentHours = String(nowIST.getHours()).padStart(2, "0");
-      const currentMinutes = String(nowIST.getMinutes()).padStart(2, "0");
-      const currentTimeStr = `${currentHours}:${currentMinutes}`;
-      const scheduledTimeStr = automation.time || "07:30";
+      const currentHours = nowIST.getHours();
+      const currentMinutes = nowIST.getMinutes();
+      const currentTimeInMinutes = currentHours * 60 + currentMinutes;
 
-      // If current time doesn't match the scheduled time, exit immediately
-      if (currentTimeStr !== scheduledTimeStr) {
+      const [schedHours, schedMins] = (automation.time || "07:30")
+        .split(":")
+        .map(Number);
+      const schedTimeInMinutes = schedHours * 60 + schedMins;
+
+      // If before scheduled time today, return waiting
+      if (currentTimeInMinutes < schedTimeInMinutes) {
         return NextResponse.json({
-          message: `Current IST time (${currentTimeStr}) does not match scheduled time (${scheduledTimeStr}).`,
+          message: `Waiting for scheduled time (${automation.time || "07:30"} IST). Current time is ${String(currentHours).padStart(2, "0")}:${String(currentMinutes).padStart(2, "0")} IST.`,
           status: "waiting",
-          currentTime: currentTimeStr,
-          scheduledTime: scheduledTimeStr,
+          currentTime: `${String(currentHours).padStart(2, "0")}:${String(currentMinutes).padStart(2, "0")}`,
+          scheduledTime: automation.time || "07:30",
         });
       }
 
-      // Check if we already triggered today for this scheduled time
+      // If at or after scheduled time, verify if it already executed today after the scheduled time
       if (automation.lastRunAt) {
         const lastRunIST = new Date(
           new Date(automation.lastRunAt).toLocaleString("en-US", {
@@ -77,14 +81,17 @@ async function handleCron(request: NextRequest) {
         const isSameDay =
           lastRunIST.getFullYear() === nowIST.getFullYear() &&
           lastRunIST.getMonth() === nowIST.getMonth() &&
-          lastRunIST.getDate() === nowIST.getDate() &&
-          lastRunIST.getHours() === nowIST.getHours();
+          lastRunIST.getDate() === nowIST.getDate();
 
         if (isSameDay) {
-          return NextResponse.json({
-            message: `Already triggered today at ${automation.lastRunAt}. Skipping duplicate ping.`,
-            status: "already_ran",
-          });
+          const lastRunMinutes =
+            lastRunIST.getHours() * 60 + lastRunIST.getMinutes();
+          if (lastRunMinutes >= schedTimeInMinutes) {
+            return NextResponse.json({
+              message: `Daily scheduled pipeline already ran today at ${automation.lastRunAt}. Skipping duplicate ping.`,
+              status: "already_ran",
+            });
+          }
         }
       }
     }
