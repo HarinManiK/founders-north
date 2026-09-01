@@ -538,16 +538,9 @@ h3 {
 }
 
 .brand-button:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
   background: var(--color-accent-light);
   color: var(--color-accent);
-}
-
-@media (max-width: 639px) {
-  .brand-button.active-home {
-    background: var(--color-accent-light);
-    color: var(--color-accent);
-  }
 }
 
 /* ---- Direct Navigation Link Pills ---- */

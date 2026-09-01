@@ -66,7 +66,7 @@ export default function Header() {
         <Link
           href="/"
           aria-label="Founders North Home"
-          className={`brand-button ${pathname === "/" ? "active-home" : ""}`}
+          className="brand-button"
         >
           <img
             src="/logo.png"
