@@ -31,6 +31,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: categoryUrl,
       title: `${category.name} | Founders North`,
       description: `Curated news, in-depth analysis, and top developments in ${category.name} for founders and operators.`,
+      images: [
+        {
+          url: `${SITE_URL}/logo.png`,
+          width: 512,
+          height: 512,
+          type: "image/png",
+          alt: category.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${category.name} | Founders North`,
+      description: `Curated news, in-depth analysis, and top developments in ${category.name} for founders and operators.`,
+      images: [`${SITE_URL}/logo.png`],
     },
   };
 }

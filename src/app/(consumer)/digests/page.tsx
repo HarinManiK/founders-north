@@ -18,6 +18,21 @@ export const metadata: Metadata = {
     url: `${SITE_URL}/digests`,
     title: "Daily Executive Digests | Founders North",
     description: "Browse the full archive of daily executive briefings and synthesized tech intelligence.",
+    images: [
+      {
+        url: `${SITE_URL}/logo.png`,
+        width: 512,
+        height: 512,
+        type: "image/png",
+        alt: "Founders North Daily Digests",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Daily Executive Digests | Founders North",
+    description: "Browse the full archive of daily executive briefings and synthesized tech intelligence.",
+    images: [`${SITE_URL}/logo.png`],
   },
 };
 

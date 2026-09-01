@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getDigestBySlug, getPublishedArticles } from "@/lib/db";
 import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
+import ShareButton from "@/components/ShareButton";
 import { getSiteUrl } from "@/lib/site";
 import type { Metadata } from "next";
 import type { Article } from "@/types";
@@ -39,9 +40,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       tags: ["Daily Digest", "Executive Summary", "Founders Intelligence"],
       images: [
         {
-          url: "/logo.png",
+          url: `${SITE_URL}/logo.png`,
           width: 512,
           height: 512,
+          type: "image/png",
           alt: digest.title,
         },
       ],
@@ -50,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: digest.title,
       description: digest.summary,
-      images: ["/logo.png"],
+      images: [`${SITE_URL}/logo.png`],
     },
   };
 }
@@ -155,9 +157,12 @@ export default async function DigestPage({ params }: Props) {
         </Link>
 
         <div style={{ marginBottom: "2rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-            <BookOpen size={16} style={{ color: "var(--color-accent)" }} />
-            <span style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>{dateStr}</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <BookOpen size={16} style={{ color: "var(--color-accent)" }} />
+              <span style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>{dateStr}</span>
+            </div>
+            <ShareButton title={`Daily Briefing: ${digest.title}`} text={digest.summary} />
           </div>
           <h1 style={{ fontSize: "1.75rem", fontWeight: 800, lineHeight: 1.3, marginBottom: "1rem" }}>
             {digest.title}
@@ -255,6 +260,32 @@ export default async function DigestPage({ params }: Props) {
             </div>
           </div>
         )}
+
+        {/* Subtle Share Bar */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "1rem 1.25rem",
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "12px",
+            marginTop: "2rem",
+            flexWrap: "wrap",
+            gap: "0.75rem",
+          }}
+        >
+          <div>
+            <h4 style={{ fontSize: "0.9rem", fontWeight: 700, margin: 0, color: "var(--color-text-primary)" }}>
+              Share today&apos;s executive briefing
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)", margin: "0.2rem 0 0" }}>
+              Keep your team and co-founders in the loop.
+            </p>
+          </div>
+          <ShareButton title={`Daily Briefing: ${digest.title}`} text={digest.summary} />
+        </div>
       </div>
     </div>
   );

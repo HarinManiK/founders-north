@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/db";
-import { Clock, ArrowLeft, ExternalLink, Lightbulb, Share2 } from "lucide-react";
+import { Clock, ArrowLeft, ExternalLink, Lightbulb } from "lucide-react";
 import ReadingProgressBar from "@/components/ReadingProgressBar";
+import ShareButton from "@/components/ShareButton";
 import { getSiteUrl } from "@/lib/site";
 import type { Metadata } from "next";
 
@@ -39,9 +40,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       tags: [article.categoryName, "Tech News", "Founders Intelligence"],
       images: [
         {
-          url: "/logo.png",
+          url: `${SITE_URL}/logo.png`,
           width: 512,
           height: 512,
+          type: "image/png",
           alt: article.title,
         },
       ],
@@ -50,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: article.title,
       description: article.excerpt,
-      images: ["/logo.png"],
+      images: [`${SITE_URL}/logo.png`],
     },
   };
 }
@@ -175,13 +177,16 @@ export default async function ArticlePage({ params }: Props) {
 
         {/* Article Header */}
         <div style={{ marginBottom: "2rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
-            <Link href={`/category/${article.categoryId}`} style={{ textDecoration: "none" }}>
-              <span className="badge">{article.categoryName}</span>
-            </Link>
-            <span style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-              <Clock size={13} /> {article.readTimeMinutes} min read
-            </span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+              <Link href={`/category/${article.categoryId}`} style={{ textDecoration: "none" }}>
+                <span className="badge">{article.categoryName}</span>
+              </Link>
+              <span style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                <Clock size={13} /> {article.readTimeMinutes} min read
+              </span>
+            </div>
+            <ShareButton title={article.title} text={article.excerpt} />
           </div>
 
           <h1 style={{ lineHeight: 1.3, marginBottom: "0.75rem" }}>
@@ -288,6 +293,32 @@ export default async function ArticlePage({ params }: Props) {
             )}
           </div>
         )}
+
+        {/* Subtle Share Bar */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "1rem 1.25rem",
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "12px",
+            marginBottom: "2.5rem",
+            flexWrap: "wrap",
+            gap: "0.75rem",
+          }}
+        >
+          <div>
+            <h4 style={{ fontSize: "0.9rem", fontWeight: 700, margin: 0, color: "var(--color-text-primary)" }}>
+              Share this intelligence briefing
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)", margin: "0.2rem 0 0" }}>
+              Pass insights along to your team and network.
+            </p>
+          </div>
+          <ShareButton title={article.title} text={article.excerpt} />
+        </div>
 
         {/* Related Articles */}
         {relatedArticles.length > 0 && (

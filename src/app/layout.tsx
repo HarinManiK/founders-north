@@ -48,9 +48,10 @@ export const metadata: Metadata = {
       "Daily briefings, in-depth analysis, and essential news for founders, operators, and business leaders.",
     images: [
       {
-        url: "/logo.png",
+        url: `${SITE_URL}/logo.png`,
         width: 512,
         height: 512,
+        type: "image/png",
         alt: "Founders North Logo",
       },
     ],
@@ -60,7 +61,7 @@ export const metadata: Metadata = {
     title: "Founders North - Tech, Startup & Business Intelligence",
     description:
       "Daily briefings, in-depth analysis, and essential news for founders, operators, and business leaders.",
-    images: ["/logo.png"],
+    images: [`${SITE_URL}/logo.png`],
   },
   robots: {
     index: true,

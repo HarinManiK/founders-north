@@ -19,6 +19,21 @@ export const metadata: Metadata = {
     url: `${SITE_URL}/categories`,
     title: "Articles & Categories | Founders North",
     description: "Browse curated tech, startup, AI, and business topics curated from top industry sources.",
+    images: [
+      {
+        url: `${SITE_URL}/logo.png`,
+        width: 512,
+        height: 512,
+        type: "image/png",
+        alt: "Founders North Categories",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Articles & Categories | Founders North",
+    description: "Browse curated tech, startup, AI, and business topics curated from top industry sources.",
+    images: [`${SITE_URL}/logo.png`],
   },
 };
 
