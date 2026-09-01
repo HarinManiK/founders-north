@@ -28,6 +28,7 @@ export interface AutomationConfig {
   timezone?: string; // e.g. "Asia/Kolkata"
   githubToken?: string;
   githubRepo?: string;
+  lastRunAt?: string;
 }
 
 export interface AppSettings {
