@@ -66,19 +66,7 @@ export default function Header() {
         <Link
           href="/"
           aria-label="Founders North Home"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.45rem",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: "1.05rem",
-            fontWeight: 800,
-            color: "var(--color-text-primary)",
-            letterSpacing: "-0.02em",
-            textDecoration: "none",
-            flexShrink: 0,
-            minWidth: 0,
-          }}
+          className={`brand-button ${pathname === "/" ? "active-home" : ""}`}
         >
           <img
             src="/logo.png"

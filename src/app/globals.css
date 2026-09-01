@@ -512,6 +512,44 @@ h3 {
   border-bottom-color: var(--color-accent);
 }
 
+/* ---- Brand Home Button ---- */
+
+.brand-button {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  flex-shrink: 0;
+  min-width: 0;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  transition: background-color 0.15s ease, transform 0.12s ease, color 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(37, 99, 235, 0.15);
+}
+
+.brand-button:hover {
+  background: var(--color-bg-secondary);
+}
+
+.brand-button:active {
+  transform: scale(0.95);
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+@media (max-width: 639px) {
+  .brand-button.active-home {
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+  }
+}
+
 /* ---- Direct Navigation Link Pills ---- */
 
 .nav-link-pill {
@@ -523,6 +561,7 @@ h3 {
   text-decoration: none;
   transition: all 0.2s ease;
   white-space: nowrap;
+  -webkit-tap-highlight-color: rgba(37, 99, 235, 0.15);
 }
 
 .nav-link-pill:hover {
