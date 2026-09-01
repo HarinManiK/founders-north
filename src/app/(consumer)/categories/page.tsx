@@ -37,13 +37,13 @@ export default async function CategoriesPage() {
             </p>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "1rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "0.85rem" }}>
             {categories.map((cat) => (
               <Link key={cat.id} href={`/category/${cat.slug}`} style={{ textDecoration: "none" }}>
-                <div className="card card-interactive" style={{ padding: "1.25rem", textAlign: "center" }}>
-                  <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.4rem" }}>{cat.name}</h3>
-                  <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
-                    {cat.articleCount} {cat.articleCount === 1 ? "article" : "articles"}
+                <div className="card card-interactive" style={{ padding: "1.1rem", textAlign: "center" }}>
+                  <h3 style={{ fontSize: "0.95rem", fontWeight: 700, marginBottom: "0.3rem" }}>{cat.name}</h3>
+                  <p style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)" }}>
+                    {cat.articleCount} {cat.articleCount === 1 ? "story" : "stories"}
                   </p>
                 </div>
               </Link>

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getArticleBySlug, getPublishedArticles } from "@/lib/db";
-import { Clock, ArrowLeft, ExternalLink, Lightbulb } from "lucide-react";
+import { Clock, ArrowLeft, ExternalLink, Lightbulb, Share2 } from "lucide-react";
+import ReadingProgressBar from "@/components/ReadingProgressBar";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +49,8 @@ export default async function ArticlePage({ params }: Props) {
   const newsletterSources = (article.sourceUrls || []).filter((s) => s.newsletterName);
 
   return (
-    <div className="animate-fade-in" style={{ padding: "2rem 0 3rem" }}>
+    <div className="animate-fade-in" style={{ padding: "1.5rem 0 3rem" }}>
+      <ReadingProgressBar />
       <div className="container-narrow">
         {/* Back Link */}
         <Link
@@ -77,15 +79,15 @@ export default async function ArticlePage({ params }: Props) {
             </span>
           </div>
 
-          <h1 style={{ fontSize: "2rem", fontWeight: 800, lineHeight: 1.3, marginBottom: "0.75rem" }}>
+          <h1 style={{ lineHeight: 1.3, marginBottom: "0.75rem" }}>
             {article.title}
           </h1>
 
-          <p style={{ fontSize: "1.05rem", color: "var(--color-text-secondary)", lineHeight: 1.6, marginBottom: "0.75rem" }}>
+          <p style={{ fontSize: "1rem", color: "var(--color-text-secondary)", lineHeight: 1.6, marginBottom: "0.75rem" }}>
             {article.excerpt}
           </p>
 
-          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--color-text-tertiary)" }}>
             {dateStr}
           </p>
         </div>

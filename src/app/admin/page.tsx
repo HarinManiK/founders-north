@@ -779,7 +779,7 @@ function SettingsTab() {
       </div>
 
       {/* 2-Column Responsive Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "1.5rem" }}>
+      <div className="settings-grid">
         {/* Row 1 Left: OpenRouter API */}
         <div className="card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", height: "100%" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>OpenRouter API</h3>
