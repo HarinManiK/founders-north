@@ -448,7 +448,11 @@ export async function executePipeline(runId: string): Promise<void> {
         publishedArticles.push({ ...item.article, id: articleId });
 
         if (item.article.categoryId) {
-          await incrementCategoryCount(item.article.categoryId);
+          try {
+            await incrementCategoryCount(item.article.categoryId);
+          } catch (countErr) {
+            console.warn("Could not increment category count:", countErr);
+          }
         }
 
         log("success", `  [Published] "${item.article.title}" (Doc ID: ${articleId}, Slug: /articles/${item.article.slug})`);

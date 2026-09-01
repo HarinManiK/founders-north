@@ -305,11 +305,16 @@ export async function deleteCategory(id: string): Promise<void> {
 }
 
 export async function incrementCategoryCount(id: string): Promise<void> {
-  const db = getDb();
-  await db
-    .collection("categories")
-    .doc(id)
-    .update({ articleCount: FieldValue.increment(1) });
+  if (!id) return;
+  try {
+    const db = getDb();
+    await db
+      .collection("categories")
+      .doc(id)
+      .set({ articleCount: FieldValue.increment(1) }, { merge: true });
+  } catch (err) {
+    console.warn(`Could not increment category count for ID ${id}:`, err);
+  }
 }
 
 export async function recountCategoryArticles(categoryId: string): Promise<number> {
