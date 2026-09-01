@@ -721,8 +721,6 @@ function SettingsTab() {
   const [saved, setSaved] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
-  const [testingTrigger, setTestingTrigger] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -751,27 +749,6 @@ function SettingsTab() {
       alert("Failed to save settings");
     }
     setSaving(false);
-  };
-
-  const testConnection = async () => {
-    setTestingTrigger(true);
-    setTestResult(null);
-    try {
-      const res = await fetch("/api/admin/pipeline/trigger-workflow", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "verify" }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setTestResult({ success: true, message: data.message || "✓ GitHub Actions connected & ready!" });
-      } else {
-        setTestResult({ success: false, message: `Error: ${data.error || "Connection failed"}` });
-      }
-    } catch (e: unknown) {
-      setTestResult({ success: false, message: `Error: ${e instanceof Error ? e.message : "Network failure"}` });
-    }
-    setTestingTrigger(false);
   };
 
   if (!settings) {
@@ -912,7 +889,7 @@ function SettingsTab() {
             </label>
           </div>
 
-          <div style={{ marginBottom: "1.25rem" }}>
+          <div>
             <label className="label">Scheduled Run Time (IST)</label>
             <input
               className="input"
@@ -934,46 +911,6 @@ function SettingsTab() {
               }
               style={{ maxWidth: "160px" }}
             />
-          </div>
-
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label className="label">Cron Webhook URL</label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input
-                className="input"
-                readOnly
-                value="https://founders-north.vercel.app/api/cron/run"
-                style={{ background: "var(--color-bg)", fontSize: "0.82rem", cursor: "text" }}
-              />
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={() => {
-                  navigator.clipboard.writeText("https://founders-north.vercel.app/api/cron/run");
-                  alert("Webhook URL copied to clipboard!");
-                }}
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-
-          {/* Test Connection Button */}
-          <div style={{ paddingTop: "0.85rem", borderTop: "1px solid var(--color-border-light)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={testConnection}
-              disabled={testingTrigger}
-              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-            >
-              {testingTrigger ? <Loader2 className="animate-spin" size={14} /> : <Activity size={14} />}
-              {testingTrigger ? "Testing..." : "Test Connection"}
-            </button>
-            {testResult && (
-              <span style={{ fontSize: "0.8rem", color: testResult.success ? "var(--color-success)" : "var(--color-error)" }}>
-                {testResult.message}
-              </span>
-            )}
           </div>
         </div>
       </div>
