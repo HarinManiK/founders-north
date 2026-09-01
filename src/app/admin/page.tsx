@@ -802,10 +802,19 @@ function SettingsTab() {
       </div>
 
       {/* 2-Column Responsive Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "1.5rem", alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "1.5rem" }}>
         {/* Row 1 Left: OpenRouter API */}
-        <div className="card" style={{ padding: "1.5rem" }}>
+        <div className="card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", height: "100%" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>OpenRouter API</h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", padding: "0.5rem 0.75rem", background: "var(--color-accent-light)", borderRadius: "8px", fontSize: "0.8rem" }}>
+            <AlertCircle size={14} style={{ color: "var(--color-accent)" }} />
+            <span style={{ color: "var(--color-text-secondary)" }}>
+              Get your API key from{" "}
+              <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" style={{ color: "var(--color-accent)", fontWeight: 600 }}>
+                openrouter.ai/keys <ExternalLink size={11} style={{ display: "inline", verticalAlign: "middle" }} />
+              </a>
+            </span>
+          </div>
           <div style={{ marginBottom: "1rem" }}>
             <label className="label">API Key</label>
             <div style={{ position: "relative" }}>
@@ -838,7 +847,7 @@ function SettingsTab() {
         </div>
 
         {/* Row 1 Right: IMAP Mailbox */}
-        <div className="card" style={{ padding: "1.5rem" }}>
+        <div className="card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", height: "100%" }}>
           <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "1rem" }}>IMAP Mailbox</h3>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem", padding: "0.5rem 0.75rem", background: "var(--color-accent-light)", borderRadius: "8px", fontSize: "0.8rem" }}>
             <AlertCircle size={14} style={{ color: "var(--color-accent)" }} />
