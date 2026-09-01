@@ -29,7 +29,13 @@ export default function ShareButton({
       url: shareUrl,
     };
 
-    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+    // Detect mobile device for native share sheet
+    const isMobile =
+      typeof window !== "undefined" &&
+      (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints > 1 && window.innerWidth <= 800));
+
+    if (isMobile && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
       try {
         await navigator.share(shareData);
         return;
@@ -40,7 +46,7 @@ export default function ShareButton({
       }
     }
 
-    // Fallback: Copy link to clipboard
+    // Desktop: Direct 1-click clipboard copy with instant feedback
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
@@ -49,6 +55,8 @@ export default function ShareButton({
       // Fallback for older browsers
       const textarea = document.createElement("textarea");
       textarea.value = shareUrl;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand("copy");
