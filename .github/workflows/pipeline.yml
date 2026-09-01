@@ -1,15 +1,11 @@
 name: Automated News Pipeline
 
 on:
-  # Automated background schedule (runs periodically to check against Admin Panel IST time setting)
-  schedule:
-    - cron: "*/15 * * * *"
-
-  # Allows triggering via GitHub API (Admin Panel, Webhooks) or manual button click in GitHub Actions
+  # Triggered instantly on demand by Webhook / Admin dispatch or GitHub Actions UI
   workflow_dispatch:
     inputs:
       trigger_source:
-        description: "Trigger Source (e.g. admin_panel, scheduled_cron, manual)"
+        description: "Trigger Source (e.g. cron_job_org, admin_panel, manual)"
         required: false
         default: "manual"
 
