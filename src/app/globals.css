@@ -320,36 +320,49 @@ h3 {
 
 /* ---- Article Content Styles ---- */
 
+.article-content {
+  width: 100%;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  box-sizing: border-box;
+}
+
 .article-content h2 {
   font-size: 1.5rem;
   margin-top: 2rem;
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--color-border-light);
+  overflow-wrap: break-word;
 }
 
 .article-content h3 {
   font-size: 1.25rem;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
+  overflow-wrap: break-word;
 }
 
 .article-content p {
   margin-bottom: 1rem;
   color: var(--color-text-secondary);
   line-height: 1.8;
+  overflow-wrap: break-word;
 }
 
 .article-content ul,
 .article-content ol {
   margin-bottom: 1rem;
   padding-left: 1.5rem;
+  overflow-wrap: break-word;
 }
 
 .article-content li {
   margin-bottom: 0.5rem;
   color: var(--color-text-secondary);
   line-height: 1.7;
+  overflow-wrap: break-word;
 }
 
 .article-content blockquote {
@@ -358,12 +371,28 @@ h3 {
   padding: 0.75rem 1.25rem;
   background: var(--color-accent-light);
   border-radius: 0 8px 8px 0;
+  overflow-wrap: break-word;
 }
 
 .article-content a {
   color: var(--color-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
+  word-break: break-all;
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.article-content pre,
+.article-content code {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .article-content strong {

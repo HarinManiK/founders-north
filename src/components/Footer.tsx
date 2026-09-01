@@ -8,13 +8,17 @@ export default function Footer() {
         background: "var(--color-bg-secondary)",
         padding: "3rem 0 2rem",
         marginTop: "4rem",
+        width: "100%",
+        maxWidth: "100vw",
+        overflowX: "hidden",
+        boxSizing: "border-box",
       }}
     >
       <div className="container-main">
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
             gap: "2rem",
             marginBottom: "2rem",
           }}

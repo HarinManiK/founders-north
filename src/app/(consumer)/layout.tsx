@@ -9,7 +9,15 @@ export default function ConsumerLayout({
   return (
     <>
       <Header />
-      <main style={{ minHeight: "calc(100vh - 64px - 200px)" }}>
+      <main
+        style={{
+          minHeight: "calc(100vh - 64px - 200px)",
+          width: "100%",
+          maxWidth: "100vw",
+          overflowX: "hidden",
+          boxSizing: "border-box",
+        }}
+      >
         {children}
       </main>
       <Footer />
