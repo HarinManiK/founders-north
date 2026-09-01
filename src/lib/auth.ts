@@ -5,7 +5,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "founder19North*";
 const COOKIE_NAME = "fn_admin_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
@@ -17,7 +16,12 @@ function getSecret(): Uint8Array {
 }
 
 export function validatePassword(password: string): boolean {
-  return password === ADMIN_PASSWORD;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminPassword) {
+    console.error("ADMIN_PASSWORD environment variable is not set on the server.");
+    return false;
+  }
+  return password === adminPassword;
 }
 
 export async function createSessionToken(): Promise<string> {
