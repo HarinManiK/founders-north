@@ -32,7 +32,7 @@ export async function getSettings(): Promise<AppSettings> {
       automation: {
         enabled: false,
         time: "07:30",
-        timezone: "Asia/Kolkata",
+        timezone: "America/New_York",
         githubToken: "",
         githubRepo: "HarinManiK/founders-north",
       },
@@ -52,7 +52,7 @@ export async function getSettings(): Promise<AppSettings> {
     automation: data.automation || {
       enabled: false,
       time: "07:30",
-      timezone: "Asia/Kolkata",
+      timezone: "America/New_York",
       githubToken: "",
       githubRepo: "HarinManiK/founders-north",
     },

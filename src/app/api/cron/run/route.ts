@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSettings, saveSettings } from "@/lib/db";
+import { getTimeInET } from "@/lib/timezone";
 
 const DEFAULT_GITHUB_REPO = "HarinManiK/founders-north";
 
@@ -46,49 +47,36 @@ async function handleCron(request: NextRequest) {
       });
     }
 
-    // 2. Check scheduled time in Asia/Kolkata (IST) unless forced
+    // 2. Check scheduled time in America/New_York (ET) unless forced
     if (!isForce) {
-      const istDateStr = new Date().toLocaleString("en-US", {
-        timeZone: "Asia/Kolkata",
-      });
-      const nowIST = new Date(istDateStr);
-      const currentHours = nowIST.getHours();
-      const currentMinutes = nowIST.getMinutes();
-      const currentTimeInMinutes = currentHours * 60 + currentMinutes;
+      const currentET = getTimeInET(new Date());
+      const currentTimeInMinutes = currentET.timeInMinutes;
 
       const [schedHours, schedMins] = (automation.time || "07:30")
         .split(":")
         .map(Number);
-      const schedTimeInMinutes = schedHours * 60 + schedMins;
+      const schedTimeInMinutes = (isNaN(schedHours) ? 7 : schedHours) * 60 + (isNaN(schedMins) ? 30 : schedMins);
 
-      // If before scheduled time today, return waiting
+      // If before scheduled time today in ET, return waiting
       if (currentTimeInMinutes < schedTimeInMinutes) {
+        const formattedCurrentTime = `${String(currentET.hours).padStart(2, "0")}:${String(currentET.minutes).padStart(2, "0")}`;
         return NextResponse.json({
-          message: `Waiting for scheduled time (${automation.time || "07:30"} IST). Current time is ${String(currentHours).padStart(2, "0")}:${String(currentMinutes).padStart(2, "0")} IST.`,
+          message: `Waiting for scheduled time (${automation.time || "07:30"} ET). Current time is ${formattedCurrentTime} ET.`,
           status: "waiting",
-          currentTime: `${String(currentHours).padStart(2, "0")}:${String(currentMinutes).padStart(2, "0")}`,
+          currentTime: formattedCurrentTime,
           scheduledTime: automation.time || "07:30",
         });
       }
 
       // If at or after scheduled time, verify if it already executed today after the scheduled time
       if (automation.lastRunAt) {
-        const lastRunIST = new Date(
-          new Date(automation.lastRunAt).toLocaleString("en-US", {
-            timeZone: "Asia/Kolkata",
-          })
-        );
-        const isSameDay =
-          lastRunIST.getFullYear() === nowIST.getFullYear() &&
-          lastRunIST.getMonth() === nowIST.getMonth() &&
-          lastRunIST.getDate() === nowIST.getDate();
+        const lastRunET = getTimeInET(new Date(automation.lastRunAt));
+        const isSameDay = lastRunET.dateKey === currentET.dateKey;
 
         if (isSameDay) {
-          const lastRunMinutes =
-            lastRunIST.getHours() * 60 + lastRunIST.getMinutes();
-          if (lastRunMinutes >= schedTimeInMinutes) {
+          if (lastRunET.timeInMinutes >= schedTimeInMinutes) {
             return NextResponse.json({
-              message: `Daily scheduled pipeline already ran today at ${automation.lastRunAt}. Skipping duplicate ping.`,
+              message: `Daily scheduled pipeline already ran today at ${automation.lastRunAt} (ET Date: ${currentET.dateKey}). Skipping duplicate ping.`,
               status: "already_ran",
             });
           }

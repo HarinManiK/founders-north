@@ -37,6 +37,9 @@ import type {
   RunLogMessage,
 } from "@/types";
 import {
+  formatETDateTime,
+  formatETDateMedium,
+  formatETTime,
   formatISTDateTime,
   formatISTDateMedium,
   formatISTTime,
@@ -420,7 +423,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
               Run Details: <span style={{ fontFamily: "monospace", fontSize: "1.05rem", fontWeight: 500, color: "var(--color-text-secondary)" }}>{selectedRunId}</span>
             </h2>
             <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
-              {selectedRun?.startedAt ? `Started on ${formatISTDateTime(selectedRun.startedAt)} (IST)` : "Loading run information..."}
+              {selectedRun?.startedAt ? `Started on ${formatETDateTime(selectedRun.startedAt)} (ET)` : "Loading run information..."}
             </p>
           </div>
 
@@ -929,7 +932,7 @@ function SettingsTab() {
                     automation: {
                       ...(settings.automation || {
                         time: "07:30",
-                        timezone: "Asia/Kolkata",
+                        timezone: "America/New_York",
                         githubToken: "",
                         githubRepo: "HarinManiK/founders-north",
                       }),
@@ -944,7 +947,7 @@ function SettingsTab() {
           </div>
 
           <div>
-            <label className="label">Scheduled Run Time (IST)</label>
+            <label className="label">Scheduled Run Time (ET)</label>
             <input
               className="input"
               type="time"
@@ -955,7 +958,7 @@ function SettingsTab() {
                   automation: {
                     ...(settings.automation || {
                       enabled: false,
-                      timezone: "Asia/Kolkata",
+                      timezone: "America/New_York",
                       githubToken: "",
                       githubRepo: "HarinManiK/founders-north",
                     }),
