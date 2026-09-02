@@ -960,9 +960,6 @@ function SettingsTab() {
             />
           </div>
         </div>
-
-        {/* Database Integrity & Sync Utility */}
-        <DatabaseSyncCard />
       </div>
     </div>
   );
@@ -1110,80 +1107,7 @@ function StatusBadge({
 }
 
 // ============================================================================
-// Database Sync & Validation Card
-// ============================================================================
 
-function DatabaseSyncCard() {
-  const [syncing, setSyncing] = useState(false);
-  const [result, setResult] = useState<{
-    categoriesAudited: number;
-    categoriesCleaned: number;
-    digestsAudited: number;
-    digestsCleaned: number;
-    articlesAudited: number;
-  } | null>(null);
-
-  const handleSync = async () => {
-    setSyncing(true);
-    setResult(null);
-    try {
-      const res = await fetch("/api/admin/sync", { method: "POST" });
-      const data = await res.json();
-      if (res.ok && data.report) {
-        setResult(data.report);
-      } else {
-        alert(data.error || "Database sync failed");
-      }
-    } catch {
-      alert("Failed to run database sync");
-    }
-    setSyncing(false);
-  };
-
-  return (
-    <div className="card" style={{ padding: "1.5rem", gridColumn: "1 / -1" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem", flexWrap: "wrap", gap: "0.75rem" }}>
-        <div>
-          <h3 style={{ fontSize: "1rem", fontWeight: 700 }}>Database Relationships &amp; Integrity Sync</h3>
-          <p style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)", marginTop: "0.2rem" }}>
-            Audits all relationships: recalculates published counts for every category, cleans up orphaned highlights in digests, and auto-removes empty documents.
-          </p>
-        </div>
-        <button
-          className="btn btn-secondary btn-sm"
-          onClick={handleSync}
-          disabled={syncing}
-          style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-        >
-          {syncing ? <Loader2 className="animate-spin" size={13} /> : <RotateCcw size={13} />}
-          {syncing ? "Auditing Database..." : "Sync & Validate Database"}
-        </button>
-      </div>
-
-      {result && (
-        <div
-          className="animate-fade-in"
-          style={{
-            padding: "0.85rem 1rem",
-            background: "rgba(16, 185, 129, 0.08)",
-            border: "1px solid rgba(16, 185, 129, 0.2)",
-            borderRadius: "8px",
-            marginTop: "0.75rem",
-            fontSize: "0.85rem",
-            color: "var(--color-text-primary)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontWeight: 600, color: "var(--color-success)", marginBottom: "0.3rem" }}>
-            <CheckCircle size={14} /> Database Synchronized Successfully
-          </div>
-          <p style={{ margin: 0, color: "var(--color-text-secondary)", fontSize: "0.8rem" }}>
-            Audited {result.articlesAudited} articles, {result.categoriesAudited} categories ({result.categoriesCleaned} cleaned), and {result.digestsAudited} digests ({result.digestsCleaned} cleaned).
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ============================================================================
 // Articles Tab
@@ -1793,7 +1717,7 @@ function AdminGuideModal({ onClose }: { onClose: () => void }) {
             <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.83rem", color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
               <li><strong>Draft All:</strong> Public site displays graceful empty state; 100% of data is preserved in Admin and instantly restored upon publishing.</li>
               <li><strong>Delete All:</strong> Purges all articles, digests, and categories, leaving Firestore in a pristine zero-orphan state.</li>
-              <li><strong>1-Click Sync:</strong> Run <em>"Sync &amp; Validate Database"</em> in Settings anytime to recalculate all counts from scratch.</li>
+              <li><strong>Automatic Cascade:</strong> Every individual action immediately cascades and keeps categories, articles, and digests in sync in real time.</li>
             </ul>
           </div>
         </div>
