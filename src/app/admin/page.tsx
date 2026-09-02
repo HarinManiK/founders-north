@@ -25,6 +25,8 @@ import {
   ArrowLeft,
   ChevronRight,
   Activity,
+  Info,
+  X,
 } from "lucide-react";
 import type {
   AppSettings,
@@ -127,6 +129,7 @@ export default function AdminPage() {
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState<Tab>("pipeline");
   const [pipelineResetKey, setPipelineResetKey] = useState(0);
+  const [showGuide, setShowGuide] = useState(false);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "pipeline", label: "Runs", icon: <Play size={15} /> },
@@ -162,28 +165,67 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               Founders North <span style={{ fontWeight: 500, color: "var(--color-text-tertiary)", fontSize: "0.85rem" }}>Admin</span>
             </h1>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={onLogout} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <LogOut size={14} /> Logout
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowGuide(true)}
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.8rem", color: "var(--color-accent)" }}
+            >
+              <Info size={14} /> Rules Guide
+            </button>
+            <button className="btn btn-ghost btn-sm" onClick={onLogout} style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <LogOut size={14} /> Logout
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
       <div style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-bg-card)", padding: "0 1.5rem" }}>
-        <div className="tab-list" style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              className={`tab-item ${activeTab === tab.id ? "active" : ""}`}
-              onClick={() => handleTabClick(tab.id)}
-              style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: "1200px", margin: "0 auto" }}>
+          <div className="tab-list">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                className={`tab-item ${activeTab === tab.id ? "active" : ""}`}
+                onClick={() => handleTabClick(tab.id)}
+                style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+              >
+                {tab.icon}
+                {tab.label}
+                {tab.id === "categories" && (
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowGuide(true);
+                    }}
+                    title="View Admin Rules & Cascade Guide"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "50%",
+                      background: "rgba(99, 102, 241, 0.18)",
+                      color: "var(--color-accent)",
+                      fontSize: "0.68rem",
+                      fontWeight: 800,
+                      marginLeft: "0.25rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    i
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* Admin Rules & Cascade Guide Modal */}
+      {showGuide && <AdminGuideModal onClose={() => setShowGuide(false)} />}
 
       {/* Content */}
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "1.5rem" }}>
@@ -192,7 +234,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeTab === "prompts" && <PromptsTab />}
         {activeTab === "articles" && <ArticlesTab />}
         {activeTab === "digests" && <DigestsTab />}
-        {activeTab === "categories" && <CategoriesTab />}
+        {activeTab === "categories" && <CategoriesTab onOpenGuide={() => setShowGuide(true)} />}
       </div>
     </div>
   );
@@ -1476,7 +1518,7 @@ function DigestsTab() {
 // Categories Tab
 // ============================================================================
 
-function CategoriesTab() {
+function CategoriesTab({ onOpenGuide }: { onOpenGuide?: () => void }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
@@ -1557,7 +1599,31 @@ function CategoriesTab() {
     <div className="animate-fade-in" style={{ maxWidth: "650px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
         <div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Categories ({categories.length})</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Categories ({categories.length})</h2>
+            {onOpenGuide && (
+              <button
+                onClick={onOpenGuide}
+                title="View Category & Cascade Rules Guide"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "20px",
+                  height: "20px",
+                  borderRadius: "50%",
+                  background: "rgba(99, 102, 241, 0.18)",
+                  color: "var(--color-accent)",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                }}
+              >
+                i
+              </button>
+            )}
+          </div>
           <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
             Manage categories, rename topics, and review published story counts.
           </p>
@@ -1629,4 +1695,117 @@ function CategoriesTab() {
     </div>
   );
 }
+
+// ============================================================================
+// Admin Rules & Cascade Guide Modal
+// ============================================================================
+
+function AdminGuideModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0, 0, 0, 0.65)",
+        backdropFilter: "blur(4px)",
+        zIndex: 200,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "1rem",
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="card animate-fade-in"
+        style={{
+          maxWidth: "680px",
+          width: "100%",
+          maxHeight: "88vh",
+          overflowY: "auto",
+          padding: "1.75rem",
+          boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1.25rem",
+            paddingBottom: "0.75rem",
+            borderBottom: "1px solid var(--color-border-light)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Info size={18} style={{ color: "var(--color-accent)" }} />
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 800 }}>Admin Rules &amp; Cascade Guide</h3>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {/* Section 1: Articles */}
+          <div style={{ padding: "1rem", borderRadius: "8px", background: "var(--color-bg)", border: "1px solid var(--color-border-light)" }}>
+            <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--color-accent)", marginBottom: "0.4rem" }}>
+              📰 Articles
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.83rem", color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+              <li><strong>Draft:</strong> Decreases category count (hides category card on site if count drops to 0). Hides story highlight in Daily Digest. If all stories in a digest are drafted, digest auto-drafts.</li>
+              <li><strong>Publish:</strong> Increases category count (re-appears on site). Story highlight re-appears in Daily Digest and restores digest to Published.</li>
+              <li><strong>Change Category:</strong> Decreases old category count and increases new category count automatically.</li>
+              <li><strong>Delete:</strong> Permanently removes story from Daily Digest (auto-deletes digest if 0 stories remain) and auto-deletes category from database if 0 articles remain.</li>
+            </ul>
+          </div>
+
+          {/* Section 2: Daily Digests */}
+          <div style={{ padding: "1rem", borderRadius: "8px", background: "var(--color-bg)", border: "1px solid var(--color-border-light)" }}>
+            <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--color-warning)", marginBottom: "0.4rem" }}>
+              📑 Daily Digests
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.83rem", color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+              <li><strong>Draft:</strong> Automatically sets <em>all linked articles</em> in that digest to Draft and updates category counts.</li>
+              <li><strong>Publish:</strong> Automatically restores <em>all linked articles</em> to Published and updates category counts.</li>
+              <li><strong>Delete:</strong> Cascade-deletes all underlying articles and cleans up empty categories.</li>
+            </ul>
+          </div>
+
+          {/* Section 3: Categories */}
+          <div style={{ padding: "1rem", borderRadius: "8px", background: "var(--color-bg)", border: "1px solid var(--color-border-light)" }}>
+            <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--color-success)", marginBottom: "0.4rem" }}>
+              📂 Categories
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.83rem", color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+              <li><strong>Rename:</strong> Automatically updates category name across <em>all existing articles</em> and Daily Digest story highlights.</li>
+              <li><strong>Delete:</strong> Cascade-deletes all articles under that category and cleans up Daily Digests.</li>
+              <li><strong>Add:</strong> Created in Admin; stays hidden from the public site until at least 1 article is published under it.</li>
+            </ul>
+          </div>
+
+          {/* Section 4: Batch & Safety */}
+          <div style={{ padding: "1rem", borderRadius: "8px", background: "var(--color-bg)", border: "1px solid var(--color-border-light)" }}>
+            <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--color-text-primary)", marginBottom: "0.4rem" }}>
+              ⚡ Batch &amp; Safety Guarantees
+            </h4>
+            <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.83rem", color: "var(--color-text-secondary)", lineHeight: 1.6 }}>
+              <li><strong>Draft All:</strong> Public site displays graceful empty state; 100% of data is preserved in Admin and instantly restored upon publishing.</li>
+              <li><strong>Delete All:</strong> Purges all articles, digests, and categories, leaving Firestore in a pristine zero-orphan state.</li>
+              <li><strong>1-Click Sync:</strong> Run <em>"Sync &amp; Validate Database"</em> in Settings anytime to recalculate all counts from scratch.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
+          <button className="btn btn-primary btn-sm" onClick={onClose}>
+            Got it
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
