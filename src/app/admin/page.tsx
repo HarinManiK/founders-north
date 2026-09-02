@@ -183,43 +183,50 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       {/* Tabs */}
       <div style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-bg-card)", padding: "0 1.5rem" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: "1200px", margin: "0 auto" }}>
-          <div className="tab-list">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={`tab-item ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => handleTabClick(tab.id)}
-                style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-              >
-                {tab.icon}
-                {tab.label}
-                {tab.id === "categories" && (
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowGuide(true);
-                    }}
-                    title="View Admin Rules & Cascade Guide"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "16px",
-                      height: "16px",
-                      borderRadius: "50%",
-                      background: "rgba(99, 102, 241, 0.18)",
-                      color: "var(--color-accent)",
-                      fontSize: "0.68rem",
-                      fontWeight: 800,
-                      marginLeft: "0.25rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    i
-                  </span>
-                )}
-              </button>
-            ))}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.85rem" }}>
+            <div className="tab-list">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  className={`tab-item ${activeTab === tab.id ? "active" : ""}`}
+                  onClick={() => handleTabClick(tab.id)}
+                  style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Standalone, Distinct Rules & Cascade Guide Button */}
+            <button
+              onClick={() => setShowGuide(true)}
+              title="Admin Rules & Cascade Guide"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "28px",
+                height: "28px",
+                borderRadius: "50%",
+                background: "rgba(99, 102, 241, 0.12)",
+                color: "var(--color-accent)",
+                border: "1px solid rgba(99, 102, 241, 0.25)",
+                cursor: "pointer",
+                padding: 0,
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(99, 102, 241, 0.25)";
+                e.currentTarget.style.transform = "scale(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(99, 102, 241, 0.12)";
+                e.currentTarget.style.transform = "scale(1)";
+              }}
+            >
+              <Info size={14} />
+            </button>
           </div>
         </div>
       </div>
