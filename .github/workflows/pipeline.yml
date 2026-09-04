@@ -8,6 +8,10 @@ on:
         description: "Trigger Source (e.g. cron_job_org, admin_panel, manual)"
         required: false
         default: "manual"
+      run_id:
+        description: "Firestore Run ID to track"
+        required: false
+        default: ""
 
 jobs:
   execute:
@@ -22,15 +26,26 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: "npm"
+          node-version: 22
+
+      - name: Restore node_modules Cache
+        id: node-modules-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
 
       - name: Install Dependencies
-        run: npm ci
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit
 
       - name: Execute Pipeline Runner
         run: npm run pipeline:run
         env:
+          RUN_ID: ${{ inputs.run_id }}
+          TRIGGER_SOURCE: ${{ inputs.trigger_source }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
