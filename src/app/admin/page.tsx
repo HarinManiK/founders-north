@@ -265,6 +265,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
 
   const consoleRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const hasAutoScrolledRef = useRef<string | null>(null);
 
   const stageLabels: Record<string, string> = {
     queued: "Queued",
@@ -284,6 +285,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
   useEffect(() => {
     setSelectedRunId(null);
     setSelectedRun(null);
+    hasAutoScrolledRef.current = null;
   }, [resetKey]);
 
   // Load all runs and identify active running ones
@@ -325,7 +327,15 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
           }
 
           if (consoleRef.current) {
-            consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+            const el = consoleRef.current;
+            // Only auto-scroll down if user is near the bottom or on initial load
+            const isInitial = hasAutoScrolledRef.current !== targetId;
+            const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+
+            if (isInitial || isNearBottom) {
+              el.scrollTop = el.scrollHeight;
+              hasAutoScrolledRef.current = targetId;
+            }
           }
         }
       } catch {
