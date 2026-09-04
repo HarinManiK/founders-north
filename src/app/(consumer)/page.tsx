@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { getLatestDigest, getTopArticles, getPublishedArticles } from "@/lib/db";
-import { Clock, ArrowRight, BookOpen, TrendingUp, Sparkles } from "lucide-react";
+import { getLatestDigest, getPublishedArticles, getCategories } from "@/lib/db";
+import { ArrowRight, BookOpen } from "lucide-react";
 import { getSiteUrl } from "@/lib/site";
+import HomeArticlesFeed from "@/components/HomeArticlesFeed";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   let latestDigest = null;
-  let topArticles: Awaited<ReturnType<typeof getTopArticles>> = [];
-  let recentArticles: Awaited<ReturnType<typeof getPublishedArticles>> = [];
+  let articles: Awaited<ReturnType<typeof getPublishedArticles>> = [];
+  let categories: Awaited<ReturnType<typeof getCategories>> = [];
 
   try {
     latestDigest = await getLatestDigest();
@@ -17,18 +18,18 @@ export default async function HomePage() {
   }
 
   try {
-    topArticles = await getTopArticles(7, 6);
+    articles = await getPublishedArticles(100);
   } catch (err) {
-    console.error("Failed to load top articles:", err);
+    console.error("Failed to load published articles:", err);
   }
 
   try {
-    recentArticles = await getPublishedArticles(5);
+    categories = await getCategories();
   } catch (err) {
-    console.error("Failed to load recent articles:", err);
+    console.error("Failed to load categories:", err);
   }
 
-  const hasContent = latestDigest || topArticles.length > 0 || recentArticles.length > 0;
+  const hasContent = latestDigest || articles.length > 0;
 
   const SITE_URL = getSiteUrl();
 
@@ -107,149 +108,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {hasContent && (
-        <>
-          {/* Top Stories This Week */}
-          {topArticles.length > 0 && (
-            <section style={{ padding: "2rem 0" }}>
-              <div className="container-main">
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem" }}>
-                  <TrendingUp size={18} style={{ color: "var(--color-accent)" }} />
-                  <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Top Stories This Week</h2>
-                </div>
-                <div className="article-grid">
-                  {topArticles.map((article) => (
-                    <ArticleCard key={article.id} article={article} />
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* Recent Articles */}
-          {recentArticles.length > 0 && (
-            <section style={{ padding: "2rem 0 3rem", borderTop: "1px solid var(--color-border-light)" }}>
-              <div className="container-main">
-                <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1.25rem" }}>Recent Articles</h2>
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  {recentArticles.map((article) => (
-                    <ArticleRow key={article.id} article={article} />
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
-        </>
+      {/* Filterable Articles Feed (Top Stories & Recent Articles) */}
+      {hasContent && articles.length > 0 && (
+        <HomeArticlesFeed articles={articles} categories={categories} />
       )}
     </div>
-  );
-}
-
-import { formatISTDateShort } from "@/lib/timezone";
-
-function ArticleCard({
-  article,
-}: {
-  article: {
-    slug: string;
-    title: string;
-    excerpt: string;
-    categoryName: string;
-    readTimeMinutes: number;
-    publishedAt: string;
-    sourceUrls: { url: string }[];
-    importanceScore: number;
-  };
-}) {
-  const dateStr = formatISTDateShort(article.publishedAt);
-
-  return (
-    <Link href={`/articles/${article.slug}`} style={{ textDecoration: "none", display: "flex", height: "100%", width: "100%" }}>
-      <div className="card card-interactive" style={{ height: "100%", width: "100%", display: "flex", flexDirection: "column", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
-          <span className="badge">{article.categoryName}</span>
-          {article.importanceScore >= 8 && (
-            <span
-              className="badge-success"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.25rem",
-                padding: "0.15rem 0.5rem",
-                borderRadius: "9999px",
-                fontSize: "0.7rem",
-                fontWeight: 600,
-              }}
-            >
-              <Sparkles size={10} /> Top Story
-            </span>
-          )}
-        </div>
-        <h3 style={{ fontSize: "1.05rem", fontWeight: 700, marginBottom: "0.5rem", lineHeight: 1.4 }}>
-          {article.title}
-        </h3>
-        <p style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", lineHeight: 1.6, flex: 1, marginBottom: "0.75rem" }}>
-          {article.excerpt}
-        </p>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            paddingTop: "0.75rem",
-            borderTop: "1px solid var(--color-border-light)",
-            fontSize: "0.78rem",
-            color: "var(--color-text-tertiary)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-              <Clock size={12} /> {article.readTimeMinutes} min
-            </span>
-            <span>{dateStr}</span>
-          </div>
-          {article.sourceUrls && article.sourceUrls.length > 0 && (
-            <span>{article.sourceUrls.length} sources</span>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function ArticleRow({
-  article,
-}: {
-  article: {
-    slug: string;
-    title: string;
-    excerpt: string;
-    categoryName: string;
-    readTimeMinutes: number;
-    publishedAt: string;
-  };
-}) {
-  const dateStr = formatISTDateShort(article.publishedAt);
-
-  return (
-    <Link href={`/articles/${article.slug}`} style={{ textDecoration: "none" }}>
-      <div className="card card-interactive" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", flexWrap: "wrap" }}>
-          <span className="badge" style={{ fontSize: "0.7rem" }}>{article.categoryName}</span>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-tertiary)" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-              <Clock size={12} /> {article.readTimeMinutes} min
-            </span>
-            <span>{dateStr}</span>
-          </div>
-        </div>
-        <h3 style={{ fontSize: "1rem", fontWeight: 700, lineHeight: 1.4 }}>
-          {article.title}
-        </h3>
-        <p style={{ fontSize: "0.875rem", color: "var(--color-text-secondary)", lineHeight: 1.5, margin: 0 }}>
-          {article.excerpt}
-        </p>
-      </div>
-    </Link>
   );
 }
