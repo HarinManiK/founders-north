@@ -318,11 +318,11 @@ export default async function ArticlePage({ params }: Props) {
         </div>
 
         {/* In-Article Newsletter Subscription */}
-        <div style={{ marginBottom: "2.5rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
           <SubscribeBox
-            variant="card"
-            title="Stay informed with the Founders North Daily Briefing"
-            subtitle="Get curated breakdowns of the day's most important founder, tech, and market stories delivered to your inbox every morning at 7:30 AM ET."
+            variant="strip"
+            title="Get this briefing in your inbox every morning (7:30 AM ET)"
+            subtitle="Free weekday edition &bull; No spam, 1-click unsubscribe"
           />
         </div>
 

@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Check, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { Mail, Check, ArrowRight, Loader2 } from "lucide-react";
 
 interface SubscribeBoxProps {
-  variant?: "card" | "compact" | "hero";
+  variant?: "strip" | "compact" | "card";
   title?: string;
   subtitle?: string;
   className?: string;
 }
 
 export default function SubscribeBox({
-  variant = "card",
-  title = "Get the Daily Briefing in your inbox",
-  subtitle = "Join founders, investors, and business leaders receiving our curated intelligence every morning at 7:30 AM ET. Zero spam, 1-click unsubscribe.",
+  variant = "strip",
+  title = "Get this briefing in your inbox every morning (7:30 AM ET)",
+  subtitle = "Free weekday edition &bull; No spam, 1-click unsubscribe",
   className = "",
 }: SubscribeBoxProps) {
   const [email, setEmail] = useState("");
@@ -68,24 +68,27 @@ export default function SubscribeBox({
     }
   };
 
+  // Success Feedback State
   if (status === "success") {
     return (
       <div
-        className={`subscribe-success-card animate-fade-in ${className}`}
+        className={`animate-fade-in ${className}`}
         style={{
-          background: "linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%)",
+          background: "linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)",
           border: "1px solid rgba(37, 99, 235, 0.25)",
-          borderRadius: "14px",
-          padding: variant === "compact" ? "1.25rem 1.5rem" : "2rem",
+          borderRadius: "12px",
+          padding: "0.85rem 1.25rem",
           display: "flex",
           alignItems: "center",
-          gap: "1rem",
+          gap: "0.85rem",
+          width: "100%",
+          boxSizing: "border-box",
         }}
       >
         <div
           style={{
-            width: "42px",
-            height: "42px",
+            width: "34px",
+            height: "34px",
             borderRadius: "50%",
             background: "rgba(16, 185, 129, 0.15)",
             color: "#10b981",
@@ -95,16 +98,17 @@ export default function SubscribeBox({
             flexShrink: 0,
           }}
         >
-          <Check size={22} strokeWidth={2.5} />
+          <Check size={18} strokeWidth={2.5} />
         </div>
-        <div>
-          <h4
+        <div style={{ flex: 1 }}>
+          <span
             style={{
-              margin: 0,
-              fontSize: "1rem",
+              fontSize: "0.92rem",
               fontWeight: 700,
               color: "var(--color-text-primary)",
               fontFamily: "'Plus Jakarta Sans', sans-serif",
+              display: "inline-block",
+              marginRight: "0.5rem",
             }}
           >
             {feedbackType === "already"
@@ -112,27 +116,27 @@ export default function SubscribeBox({
               : feedbackType === "reactivated"
               ? "Welcome back!"
               : "You're on the list!"}
-          </h4>
-          <p
+          </span>
+          <span
             style={{
-              margin: "0.25rem 0 0",
-              fontSize: "0.85rem",
+              fontSize: "0.82rem",
               color: "var(--color-text-secondary)",
-              lineHeight: 1.5,
+              lineHeight: 1.4,
             }}
           >
             {message}
-          </p>
+          </span>
         </div>
       </div>
     );
   }
 
+  // Compact Form for Footers
   if (variant === "compact") {
     return (
       <div className={`subscribe-compact ${className}`}>
         <form onSubmit={handleSubmit} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: "1 1 220px" }}>
+          <div style={{ position: "relative", flex: "1 1 200px" }}>
             <Mail
               size={15}
               style={{
@@ -147,7 +151,7 @@ export default function SubscribeBox({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
+              placeholder="Enter your email address..."
               className="input"
               disabled={loading}
               style={{
@@ -165,15 +169,15 @@ export default function SubscribeBox({
             disabled={loading || !email}
             style={{
               height: "38px",
-              padding: "0 1.25rem",
+              padding: "0 1.15rem",
               fontSize: "0.85rem",
               display: "inline-flex",
               alignItems: "center",
-              gap: "0.4rem",
+              gap: "0.35rem",
               flexShrink: 0,
             }}
           >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : "Subscribe"}
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <>Send Daily <ArrowRight size={13} /></>}
           </button>
         </form>
         {status === "error" && (
@@ -185,140 +189,227 @@ export default function SubscribeBox({
     );
   }
 
-  return (
-    <div
-      className={`subscribe-box-card ${className}`}
-      style={{
-        background: "var(--color-bg-card)",
-        border: "1px solid var(--color-border)",
-        borderRadius: "16px",
-        padding: variant === "hero" ? "2.25rem 2rem" : "1.75rem",
-        position: "relative",
-        overflow: "hidden",
-        boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-      }}
-    >
+  // Card Variant for In-Article Callouts
+  if (variant === "card") {
+    return (
       <div
+        className={`subscribe-box-card ${className}`}
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "0.4rem",
-          padding: "3px 10px",
-          borderRadius: "20px",
-          background: "rgba(37, 99, 235, 0.1)",
-          color: "var(--color-accent)",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.06em",
-          marginBottom: "0.75rem",
+          background: "var(--color-bg-card)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "14px",
+          padding: "1.25rem 1.5rem",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
         }}
       >
-        <Sparkles size={12} />
-        Free Daily Briefing
-      </div>
-
-      <h3
-        style={{
-          margin: "0 0 0.5rem",
-          fontSize: variant === "hero" ? "1.4rem" : "1.15rem",
-          fontWeight: 800,
-          letterSpacing: "-0.01em",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-          color: "var(--color-text-primary)",
-        }}
-      >
-        {title}
-      </h3>
-
-      <p
-        style={{
-          margin: "0 0 1.25rem",
-          fontSize: "0.88rem",
-          color: "var(--color-text-secondary)",
-          lineHeight: 1.6,
-          maxWidth: "600px",
-        }}
-      >
-        {subtitle}
-      </p>
-
-      <form onSubmit={handleSubmit} style={{ maxWidth: "520px" }}>
-        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: "1 1 240px" }}>
-            <Mail
-              size={16}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.75rem" }}>
+          <div
+            style={{
+              width: "30px",
+              height: "30px",
+              borderRadius: "8px",
+              background: "rgba(37, 99, 235, 0.1)",
+              color: "var(--color-accent)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Mail size={15} />
+          </div>
+          <div>
+            <h4
               style={{
-                position: "absolute",
-                left: "0.9rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--color-text-tertiary)",
+                margin: 0,
+                fontSize: "0.95rem",
+                fontWeight: 700,
+                color: "var(--color-text-primary)",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
-            />
+            >
+              {title}
+            </h4>
+            <span style={{ fontSize: "0.76rem", color: "var(--color-text-tertiary)" }}>
+              Delivered daily at 7:30 AM ET &bull; Free forever
+            </span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your work email..."
+              placeholder="Enter your email address..."
               className="input"
               disabled={loading}
               style={{
-                paddingLeft: "2.4rem",
-                fontSize: "0.9rem",
-                height: "44px",
-                width: "100%",
+                fontSize: "0.85rem",
+                height: "40px",
+                flex: "1 1 200px",
                 boxSizing: "border-box",
-                borderRadius: "8px",
               }}
               required
             />
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+              style={{
+                height: "40px",
+                padding: "0 1.25rem",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                flexShrink: 0,
+              }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" /> Sending...
+                </>
+              ) : (
+                <>
+                  Send Daily <ArrowRight size={13} />
+                </>
+              )}
+            </button>
           </div>
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-            style={{
-              height: "44px",
-              padding: "0 1.5rem",
-              fontSize: "0.88rem",
-              fontWeight: 600,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.4rem",
-              borderRadius: "8px",
-              flexShrink: 0,
-            }}
-          >
-            {loading ? (
-              <>
-                <Loader2 size={15} className="animate-spin" /> Subscribing...
-              </>
-            ) : (
-              <>
-                Subscribe <ArrowRight size={14} />
-              </>
-            )}
-          </button>
-        </div>
+          {status === "error" && (
+            <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", color: "var(--color-danger, #ef4444)" }}>
+              {message}
+            </p>
+          )}
+        </form>
+      </div>
+    );
+  }
 
-        {status === "error" && (
-          <p style={{ margin: "0.5rem 0 0", fontSize: "0.8rem", color: "var(--color-danger, #ef4444)" }}>
-            {message}
-          </p>
-        )}
-
-        <p
+  // Default: Ultra-Slim "Strip" Bar (Minimal Space, High Conversion)
+  return (
+    <div
+      className={`subscribe-bar-strip ${className}`}
+      style={{
+        background: "var(--color-bg-card)",
+        border: "1px solid var(--color-border)",
+        borderRadius: "12px",
+        padding: "0.75rem 1.15rem",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        flexWrap: "wrap",
+        gap: "0.75rem 1.25rem",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
+      {/* Left: Headline & Subtle Timing */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", minWidth: "260px" }}>
+        <div
           style={{
-            margin: "0.75rem 0 0",
-            fontSize: "0.74rem",
-            color: "var(--color-text-tertiary)",
-            letterSpacing: "0.01em",
+            width: "32px",
+            height: "32px",
+            borderRadius: "8px",
+            background: "rgba(37, 99, 235, 0.1)",
+            color: "var(--color-accent)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
           }}
         >
-          Delivered every morning at 7:30 AM ET. No promotional spam. Unsubscribe in one click anytime.
-        </p>
+          <Mail size={16} />
+        </div>
+        <div>
+          <div
+            style={{
+              fontSize: "0.92rem",
+              fontWeight: 700,
+              color: "var(--color-text-primary)",
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              letterSpacing: "-0.01em",
+              lineHeight: 1.3,
+            }}
+          >
+            {title}
+          </div>
+          <div
+            style={{
+              fontSize: "0.74rem",
+              color: "var(--color-text-tertiary)",
+              marginTop: "1px",
+            }}
+            dangerouslySetInnerHTML={{ __html: subtitle }}
+          />
+        </div>
+      </div>
+
+      {/* Right: Inline Input & "Send Daily" Button */}
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.4rem",
+          flex: "1 1 300px",
+          maxWidth: "440px",
+        }}
+      >
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter your email address..."
+          className="input"
+          disabled={loading}
+          style={{
+            height: "38px",
+            fontSize: "0.85rem",
+            padding: "0 0.85rem",
+            flex: 1,
+            minWidth: 0,
+            boxSizing: "border-box",
+          }}
+          required
+        />
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={loading}
+          style={{
+            height: "38px",
+            padding: "0 1.15rem",
+            fontSize: "0.84rem",
+            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.35rem",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+        >
+          {loading ? (
+            <>
+              <Loader2 size={13} className="animate-spin" /> Sending...
+            </>
+          ) : (
+            <>
+              Send Daily <ArrowRight size={13} />
+            </>
+          )}
+        </button>
       </form>
+
+      {status === "error" && (
+        <div style={{ width: "100%", margin: "-0.25rem 0 0", fontSize: "0.78rem", color: "var(--color-danger, #ef4444)" }}>
+          {message}
+        </div>
+      )}
     </div>
   );
 }

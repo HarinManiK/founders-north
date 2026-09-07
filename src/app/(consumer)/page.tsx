@@ -107,12 +107,12 @@ export default async function HomePage() {
             </div>
           )}
 
-          {/* Daily Briefing Subscription Banner */}
-          <div style={{ marginTop: "1.75rem" }}>
+          {/* Daily Briefing Subscription Strip */}
+          <div style={{ marginTop: "1rem" }}>
             <SubscribeBox
-              variant="hero"
-              title="Get tomorrow's briefing delivered directly to your inbox"
-              subtitle="Join founders, investors, and operators receiving concise intelligence on tech breakthroughs, startup capital, and business strategy every morning at 7:30 AM ET. Free forever."
+              variant="strip"
+              title="Get this briefing in your inbox every morning (7:30 AM ET)"
+              subtitle="Free weekday edition &bull; No spam, 1-click unsubscribe"
             />
           </div>
         </div>
