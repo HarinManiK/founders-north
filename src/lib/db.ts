@@ -448,15 +448,17 @@ export async function addSubscriber(rawEmail: string): Promise<{
       return { success: true, subscriber: existing, alreadySubscribed: true };
     }
     // Re-activate if previously unsubscribed
-    const updated: Partial<Subscriber> = {
+    const updated: any = {
       status: "active",
       subscribedAt: new Date().toISOString(),
       unsubscribeToken: existing.unsubscribeToken || randomUUID(),
+      unsubscribedAt: FieldValue.delete(),
     };
-    await docRef.set(updated, { merge: true });
+    await docRef.update(updated);
+    const { unsubscribedAt, ...rest } = existing;
     return {
       success: true,
-      subscriber: { ...existing, ...updated } as Subscriber,
+      subscriber: { ...rest, status: "active", subscribedAt: updated.subscribedAt } as Subscriber,
       reactivated: true,
     };
   }

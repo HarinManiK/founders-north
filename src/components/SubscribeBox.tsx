@@ -19,6 +19,7 @@ export default function SubscribeBox({
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [feedbackType, setFeedbackType] = useState<"new" | "already" | "reactivated">("new");
   const [message, setMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,6 +47,13 @@ export default function SubscribeBox({
 
       if (res.ok && data.success) {
         setStatus("success");
+        if (data.alreadySubscribed) {
+          setFeedbackType("already");
+        } else if (data.reactivated) {
+          setFeedbackType("reactivated");
+        } else {
+          setFeedbackType("new");
+        }
         setMessage(data.message || "You're subscribed! Welcome to Founders North.");
         setEmail("");
       } else {
@@ -99,7 +107,11 @@ export default function SubscribeBox({
               fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
-            You&apos;re on the list!
+            {feedbackType === "already"
+              ? "You're already a subscriber!"
+              : feedbackType === "reactivated"
+              ? "Welcome back!"
+              : "You're on the list!"}
           </h4>
           <p
             style={{

@@ -32,13 +32,16 @@ export async function POST(request: NextRequest) {
     }
 
     const message = result.alreadySubscribed
-      ? "You're already subscribed! You will receive our next daily briefing."
+      ? "You're already a subscriber! You will receive our next daily briefing at 7:30 AM ET."
+      : result.reactivated
+      ? "Welcome back! Your subscription has been reactivated. You will receive tomorrow's briefing."
       : "Welcome to Founders North! You are now subscribed to the Daily Briefing.";
 
     return NextResponse.json({
       success: true,
       message,
       alreadySubscribed: !!result.alreadySubscribed,
+      reactivated: !!result.reactivated,
     });
   } catch (error) {
     console.error("[Subscribe API Error]", error);
