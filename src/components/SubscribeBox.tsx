@@ -186,119 +186,204 @@ export default function SubscribeBox({
         background: "var(--color-bg-card)",
         border: "1px solid var(--color-border)",
         borderRadius: "12px",
-        padding: "0.75rem 1.15rem",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: "0.75rem 1.25rem",
         boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
         width: "100%",
         boxSizing: "border-box",
       }}
     >
-      {/* Left: Headline & Clearly Visible Subtitle */}
-      <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", minWidth: "260px" }}>
-        <div
+      {/* ================= DESKTOP VIEW (>= 768px) ================= */}
+      <div className="subscribe-desktop-wrapper">
+        {/* Left: Headline & Clearly Visible Subtitle */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", minWidth: "260px" }}>
+          <div
+            style={{
+              width: "32px",
+              height: "32px",
+              borderRadius: "8px",
+              background: "rgba(37, 99, 235, 0.1)",
+              color: "var(--color-accent)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Mail size={16} />
+          </div>
+          <div>
+            <div
+              style={{
+                fontSize: "0.92rem",
+                fontWeight: 700,
+                color: "var(--color-text-primary)",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                letterSpacing: "-0.01em",
+                lineHeight: 1.3,
+              }}
+            >
+              {title}
+            </div>
+            <div
+              style={{
+                fontSize: "0.82rem",
+                fontWeight: 500,
+                color: "var(--color-text-secondary)",
+                marginTop: "2px",
+                lineHeight: 1.3,
+              }}
+            >
+              {subtitle}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Inline Input & "Send Daily" Button */}
+        <form
+          onSubmit={handleSubmit}
           style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "8px",
-            background: "rgba(37, 99, 235, 0.1)",
-            color: "var(--color-accent)",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
+            gap: "0.4rem",
+            flex: "1 1 300px",
+            maxWidth: "440px",
           }}
         >
-          <Mail size={16} />
-        </div>
-        <div>
-          <div
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email address..."
+            className="input"
+            disabled={loading}
             style={{
-              fontSize: "0.92rem",
-              fontWeight: 700,
-              color: "var(--color-text-primary)",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              letterSpacing: "-0.01em",
-              lineHeight: 1.3,
+              height: "38px",
+              fontSize: "0.85rem",
+              padding: "0 0.85rem",
+              flex: 1,
+              minWidth: 0,
+              boxSizing: "border-box",
+            }}
+            required
+          />
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading}
+            style={{
+              height: "38px",
+              padding: "0 1.15rem",
+              fontSize: "0.84rem",
+              fontWeight: 600,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.35rem",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
-            {title}
-          </div>
-          <div
-            style={{
-              fontSize: "0.82rem",
-              fontWeight: 500,
-              color: "var(--color-text-secondary)",
-              marginTop: "2px",
-              lineHeight: 1.3,
-            }}
-          >
-            {subtitle}
-          </div>
-        </div>
+            {loading ? (
+              <>
+                <Loader2 size={13} className="animate-spin" /> Sending...
+              </>
+            ) : (
+              <>
+                Send Daily <ArrowRight size={13} />
+              </>
+            )}
+          </button>
+        </form>
       </div>
 
-      {/* Right: Inline Input & "Send Daily" Button */}
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.4rem",
-          flex: "1 1 300px",
-          maxWidth: "440px",
-        }}
-      >
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email address..."
-          className="input"
-          disabled={loading}
+      {/* ================= MOBILE VIEW (< 768px) ================= */}
+      <div className="subscribe-mobile-wrapper">
+        {/* Single-line Header with Inline Icon */}
+        <div
           style={{
-            height: "38px",
-            fontSize: "0.85rem",
-            padding: "0 0.85rem",
-            flex: 1,
-            minWidth: 0,
-            boxSizing: "border-box",
-          }}
-          required
-        />
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={loading}
-          style={{
-            height: "38px",
-            padding: "0 1.15rem",
-            fontSize: "0.84rem",
-            fontWeight: 600,
-            display: "inline-flex",
+            display: "flex",
             alignItems: "center",
-            gap: "0.35rem",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
+            gap: "0.45rem",
+            width: "100%",
+            fontSize: "0.82rem",
+            fontWeight: 600,
+            color: "var(--color-text-primary)",
+            lineHeight: 1.25,
+            letterSpacing: "-0.01em",
           }}
         >
-          {loading ? (
-            <>
-              <Loader2 size={13} className="animate-spin" /> Sending...
-            </>
-          ) : (
-            <>
-              Send Daily <ArrowRight size={13} />
-            </>
-          )}
-        </button>
-      </form>
+          <Mail size={15} style={{ color: "var(--color-accent)", flexShrink: 0 }} />
+          <span>Daily briefing in your inbox at 7:30 AM ET</span>
+        </div>
+
+        {/* Integrated 34px Slim Pill Form */}
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            width: "100%",
+            height: "34px",
+            borderRadius: "9999px",
+            border: "1px solid var(--color-border)",
+            background: "var(--color-bg)",
+            padding: "2px 2px 2px 10px",
+            boxSizing: "border-box",
+            marginTop: "0.45rem",
+          }}
+        >
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email..."
+            disabled={loading}
+            style={{
+              border: "none",
+              background: "transparent",
+              height: "100%",
+              padding: 0,
+              fontSize: "0.8rem",
+              color: "var(--color-text-primary)",
+              flex: 1,
+              minWidth: 0,
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+            required
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              height: "28px",
+              borderRadius: "9999px",
+              padding: "0 12px",
+              fontSize: "0.78rem",
+              fontWeight: 600,
+              background: "var(--color-accent)",
+              color: "#ffffff",
+              border: "none",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.25rem",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              transition: "opacity 0.15s ease",
+            }}
+          >
+            {loading ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <>
+                Send <ArrowRight size={12} />
+              </>
+            )}
+          </button>
+        </form>
+      </div>
 
       {status === "error" && (
-        <div style={{ width: "100%", margin: "-0.25rem 0 0", fontSize: "0.78rem", color: "var(--color-danger, #ef4444)" }}>
+        <div style={{ width: "100%", margin: "0.25rem 0 0", fontSize: "0.78rem", color: "var(--color-danger, #ef4444)" }}>
           {message}
         </div>
       )}
