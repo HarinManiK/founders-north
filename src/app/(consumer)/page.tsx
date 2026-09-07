@@ -64,7 +64,7 @@ export default async function HomePage() {
           borderBottom: "1px solid var(--color-border-light)",
         }}
       >
-        <div className="container-main">
+        <div className="container-main" style={{ display: "flex", flexDirection: "column" }}>
           {latestDigest ? (
             <Link href={`/digests/${latestDigest.slug}`} style={{ textDecoration: "none" }}>
               <div className="card card-interactive hero-digest-card">
@@ -107,8 +107,8 @@ export default async function HomePage() {
             </div>
           )}
 
-          {/* Daily Briefing Subscription Strip */}
-          <div style={{ marginTop: "1rem" }}>
+          {/* Daily Briefing Subscription Strip (Desktop: Above Briefing, Mobile: Below) */}
+          <div className="hero-subscribe-wrapper">
             <SubscribeBox
               variant="strip"
               title="Get this briefing in your inbox every morning (7:30 AM ET)"

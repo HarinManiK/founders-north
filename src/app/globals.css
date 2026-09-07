@@ -697,3 +697,19 @@ h3 {
     display: none !important;
   }
 }
+
+/* Hero subscription placement: above briefing on desktop, below on mobile */
+.hero-subscribe-wrapper {
+  order: 2;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .hero-subscribe-wrapper {
+    order: -1;
+    margin-top: 0;
+    margin-bottom: 1.25rem;
+  }
+}
+
