@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, Check, ArrowRight, Loader2 } from "lucide-react";
 
 interface SubscribeBoxProps {
@@ -8,6 +8,47 @@ interface SubscribeBoxProps {
   title?: string;
   subtitle?: string;
   className?: string;
+  style?: React.CSSProperties;
+}
+
+const STORAGE_KEY = "fn_subscriber_email";
+
+// Deduplicated background check cache across multiple component instances
+let inFlightCheck: Promise<boolean> | null = null;
+let lastCheckedEmail = "";
+let lastCheckResult = false;
+let lastCheckTime = 0;
+
+async function checkSubscriberStatus(email: string): Promise<boolean> {
+  const now = Date.now();
+  // Cache check for 60 seconds to avoid repeating checks during rapid navigation
+  if (email === lastCheckedEmail && now - lastCheckTime < 60000) {
+    return lastCheckResult;
+  }
+  if (inFlightCheck && email === lastCheckedEmail) {
+    return inFlightCheck;
+  }
+
+  lastCheckedEmail = email;
+  inFlightCheck = (async () => {
+    try {
+      const res = await fetch(`/api/subscribe?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        lastCheckResult = !!data.subscribed;
+        lastCheckTime = Date.now();
+        return lastCheckResult;
+      }
+      return false;
+    } catch {
+      // In case of temporary network error, keep current state
+      return true;
+    } finally {
+      inFlightCheck = null;
+    }
+  })();
+
+  return inFlightCheck;
 }
 
 export default function SubscribeBox({
@@ -15,12 +56,44 @@ export default function SubscribeBox({
   title = "Get this briefing in your inbox every morning (7:30 AM ET)",
   subtitle = "Free daily briefing, unsubscribe anytime",
   className = "",
+  style,
 }: SubscribeBoxProps) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [feedbackType, setFeedbackType] = useState<"new" | "already" | "reactivated">("new");
   const [message, setMessage] = useState("");
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  useEffect(() => {
+    const syncState = () => {
+      try {
+        const savedEmail = localStorage.getItem(STORAGE_KEY);
+        if (savedEmail) {
+          setIsSubscribed(true);
+          checkSubscriberStatus(savedEmail).then((active) => {
+            if (!active) {
+              try {
+                localStorage.removeItem(STORAGE_KEY);
+              } catch {}
+              setIsSubscribed(false);
+            }
+          });
+        } else {
+          setIsSubscribed(false);
+        }
+      } catch {}
+    };
+
+    syncState();
+
+    window.addEventListener("fn:subscriber_changed", syncState);
+    window.addEventListener("storage", syncState);
+    return () => {
+      window.removeEventListener("fn:subscriber_changed", syncState);
+      window.removeEventListener("storage", syncState);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +120,14 @@ export default function SubscribeBox({
 
       if (res.ok && data.success) {
         setStatus("success");
+        try {
+          localStorage.setItem(STORAGE_KEY, cleanEmail);
+          lastCheckedEmail = cleanEmail;
+          lastCheckResult = true;
+          lastCheckTime = Date.now();
+          window.dispatchEvent(new Event("fn:subscriber_changed"));
+        } catch {}
+
         if (data.alreadySubscribed) {
           setFeedbackType("already");
         } else if (data.reactivated) {
@@ -67,6 +148,33 @@ export default function SubscribeBox({
       setLoading(false);
     }
   };
+
+  // If user is already an active subscriber (and didn't just submit right now), hide the button
+  if (isSubscribed && status !== "success") {
+    if (variant === "compact") {
+      return (
+        <div
+          className={className}
+          style={{
+            fontSize: "0.82rem",
+            color: "var(--color-accent)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "0.35rem",
+            fontWeight: 600,
+            padding: "0.35rem 0.65rem",
+            background: "rgba(37, 99, 235, 0.08)",
+            borderRadius: "6px",
+            border: "1px solid rgba(37, 99, 235, 0.2)",
+            ...style,
+          }}
+        >
+          <Check size={14} /> Subscribed to Daily Briefing
+        </div>
+      );
+    }
+    return null;
+  }
 
   // Success Feedback
   if (status === "success") {
@@ -134,7 +242,7 @@ export default function SubscribeBox({
   // Compact Form for Footers
   if (variant === "compact") {
     return (
-      <div className={`subscribe-compact ${className}`}>
+      <div className={`subscribe-compact ${className}`} style={style}>
         <form onSubmit={handleSubmit} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
           <div style={{ position: "relative", flex: "1 1 180px" }}>
             <input
@@ -189,6 +297,7 @@ export default function SubscribeBox({
         boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
         width: "100%",
         boxSizing: "border-box",
+        ...style,
       }}
     >
       {/* ================= DESKTOP VIEW (>= 768px) ================= */}

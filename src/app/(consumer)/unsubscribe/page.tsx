@@ -22,6 +22,16 @@ function UnsubscribeContent() {
     }
   }, [emailParam]);
 
+  // If unsubscribe succeeded, remove subscriber email from localStorage
+  useEffect(() => {
+    if (success) {
+      try {
+        localStorage.removeItem("fn_subscriber_email");
+        window.dispatchEvent(new Event("fn:subscriber_changed"));
+      } catch {}
+    }
+  }, [success]);
+
   const handleResubscribe = async (emailToSub: string) => {
     if (!emailToSub) return;
     setResubscribing(true);
@@ -33,6 +43,10 @@ function UnsubscribeContent() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
+        try {
+          localStorage.setItem("fn_subscriber_email", emailToSub.trim().toLowerCase());
+          window.dispatchEvent(new Event("fn:subscriber_changed"));
+        } catch {}
         setResubscribed(true);
       } else {
         setManualStatus(data.error || "Failed to resubscribe. Please try again.");

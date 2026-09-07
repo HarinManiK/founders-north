@@ -713,6 +713,11 @@ h3 {
   }
 }
 
+.hero-subscribe-wrapper:empty {
+  display: none !important;
+  margin: 0 !important;
+}
+
 /* Subscribe Strip Responsive Layout */
 .subscribe-bar-strip {
   padding: 0.6rem 0.85rem;

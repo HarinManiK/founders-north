@@ -108,13 +108,12 @@ export default async function HomePage() {
           )}
 
           {/* Daily Briefing Subscription Strip (Desktop: Above Briefing, Mobile: Below) */}
-          <div className="hero-subscribe-wrapper">
-            <SubscribeBox
-              variant="strip"
-              title="Get this briefing in your inbox every morning (7:30 AM ET)"
-              subtitle="Free daily briefing, unsubscribe anytime"
-            />
-          </div>
+          <SubscribeBox
+            variant="strip"
+            className="hero-subscribe-wrapper"
+            title="Get this briefing in your inbox every morning (7:30 AM ET)"
+            subtitle="Free daily briefing, unsubscribe anytime"
+          />
         </div>
       </section>
 

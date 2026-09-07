@@ -3,10 +3,30 @@
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";
-import { addSubscriber } from "@/lib/db";
+import { addSubscriber, isSubscriberActive } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/newsletter/sender";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+/**
+ * GET: Silent background check if an email is actively subscribed.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const email = (searchParams.get("email") || "").trim().toLowerCase();
+
+    if (!email || !EMAIL_REGEX.test(email) || email.length > 254) {
+      return NextResponse.json({ subscribed: false });
+    }
+
+    const active = await isSubscriberActive(email);
+    return NextResponse.json({ subscribed: active });
+  } catch (error) {
+    console.error("[Subscribe Check Error]", error);
+    return NextResponse.json({ subscribed: false });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

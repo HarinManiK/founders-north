@@ -475,6 +475,16 @@ export async function addSubscriber(rawEmail: string): Promise<{
   return { success: true, subscriber: newSubscriber };
 }
 
+export async function isSubscriberActive(rawEmail: string): Promise<boolean> {
+  if (!rawEmail) return false;
+  const db = getDb();
+  const email = rawEmail.trim().toLowerCase();
+  const snap = await db.collection("subscribers").doc(email).get();
+  if (!snap.exists) return false;
+  const data = snap.data() as Subscriber;
+  return data?.status === "active";
+}
+
 export async function getSubscriberByToken(token: string): Promise<Subscriber | null> {
   if (!token) return null;
   const db = getDb();
