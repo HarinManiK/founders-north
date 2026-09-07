@@ -4,6 +4,7 @@ import { getArticleBySlug, getPublishedArticles } from "@/lib/db";
 import { Clock, ArrowLeft, ExternalLink, Lightbulb } from "lucide-react";
 import ReadingProgressBar from "@/components/ReadingProgressBar";
 import ShareButton from "@/components/ShareButton";
+import SubscribeBox from "@/components/SubscribeBox";
 import { getSiteUrl } from "@/lib/site";
 import type { Metadata } from "next";
 
@@ -314,6 +315,15 @@ export default async function ArticlePage({ params }: Props) {
             </p>
           </div>
           <ShareButton title={article.title} text={article.excerpt} />
+        </div>
+
+        {/* In-Article Newsletter Subscription */}
+        <div style={{ marginBottom: "2.5rem" }}>
+          <SubscribeBox
+            variant="card"
+            title="Stay informed with the Founders North Daily Briefing"
+            subtitle="Get curated breakdowns of the day's most important founder, tech, and market stories delivered to your inbox every morning at 7:30 AM ET."
+          />
         </div>
 
         {/* Related Articles */}

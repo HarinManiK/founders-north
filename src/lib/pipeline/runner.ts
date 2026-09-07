@@ -30,6 +30,7 @@ import {
   getRun,
   rollbackRun,
 } from "@/lib/db";
+import { dispatchDailyNewsletter } from "@/lib/newsletter/sender";
 import { toISTString, toISTDateString, toISTHumanDate } from "@/lib/timezone";
 import type {
   ExtractedTopic,
@@ -561,6 +562,19 @@ export async function executePipeline(runId: string): Promise<void> {
       digestId = await createDigest(digestData);
       log("success", `[Digest Published] "${digestData.title}" (Doc ID: ${digestId}, ${digestHighlights.length} highlights)`);
       log("info", `  Executive Summary: "${digestData.summary.slice(0, 150)}..."`);
+
+      // ================================================================
+      // STAGE 8: Dispatch Newsletter Email
+      // ================================================================
+      try {
+        await updateRunStatus(runId, "running", "dispatching_newsletter");
+        log("info", "--- Stage 8: Dispatching Daily Digest Newsletter ---");
+        const fullDigest: DailyDigest = { ...digestData, id: digestId };
+        const dispatchResult = await dispatchDailyNewsletter(fullDigest, (msg) => log("info", msg));
+        log("success", `[Newsletter Complete] ${dispatchResult.sent} sent, ${dispatchResult.failed} failed out of ${dispatchResult.total} subscriber(s)`);
+      } catch (newsletterErr) {
+        log("warn", `[Newsletter Error] Could not dispatch newsletter: ${newsletterErr instanceof Error ? newsletterErr.message : String(newsletterErr)}`);
+      }
     } catch (digestErr) {
       log("error", `[Digest Error] Failed to compile Daily Digest: ${digestErr instanceof Error ? digestErr.message : String(digestErr)}`);
     }

@@ -3,6 +3,7 @@ import { getLatestDigest, getPublishedArticles, getCategories } from "@/lib/db";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { getSiteUrl } from "@/lib/site";
 import HomeArticlesFeed from "@/components/HomeArticlesFeed";
+import SubscribeBox from "@/components/SubscribeBox";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +106,15 @@ export default async function HomePage() {
               </p>
             </div>
           )}
+
+          {/* Daily Briefing Subscription Banner */}
+          <div style={{ marginTop: "1.75rem" }}>
+            <SubscribeBox
+              variant="hero"
+              title="Get tomorrow's briefing delivered directly to your inbox"
+              subtitle="Join founders, investors, and operators receiving concise intelligence on tech breakthroughs, startup capital, and business strategy every morning at 7:30 AM ET. Free forever."
+            />
+          </div>
         </div>
       </section>
 

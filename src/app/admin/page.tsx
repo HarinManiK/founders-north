@@ -27,6 +27,9 @@ import {
   Activity,
   Info,
   X,
+  Mail,
+  Users,
+  Send,
 } from "lucide-react";
 import type {
   AppSettings,
@@ -35,6 +38,7 @@ import type {
   Category,
   PipelineRun,
   RunLogMessage,
+  Subscriber,
 } from "@/types";
 import {
   formatETDateTime,
@@ -45,7 +49,7 @@ import {
   formatISTTime,
 } from "@/lib/timezone";
 
-type Tab = "pipeline" | "settings" | "prompts" | "articles" | "digests" | "categories";
+type Tab = "pipeline" | "settings" | "subscribers" | "prompts" | "articles" | "digests" | "categories";
 
 export default function AdminPage() {
   const [authed, setAuthed] = useState(false);
@@ -137,6 +141,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "pipeline", label: "Runs", icon: <Play size={15} /> },
     { id: "settings", label: "Settings", icon: <Settings size={15} /> },
+    { id: "subscribers", label: "Subscribers", icon: <Users size={15} /> },
     { id: "prompts", label: "Prompts", icon: <FileText size={15} /> },
     { id: "articles", label: "Articles", icon: <BookOpen size={15} /> },
     { id: "digests", label: "Daily Digests", icon: <BookOpen size={15} /> },
@@ -241,6 +246,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "1.5rem" }}>
         {activeTab === "pipeline" && <PipelineTab resetKey={pipelineResetKey} />}
         {activeTab === "settings" && <SettingsTab />}
+        {activeTab === "subscribers" && <SubscribersTab />}
         {activeTab === "prompts" && <PromptsTab />}
         {activeTab === "articles" && <ArticlesTab />}
         {activeTab === "digests" && <DigestsTab />}
@@ -276,6 +282,7 @@ function PipelineTab({ resetKey = 0 }: { resetKey?: number }) {
     categorizing: "Categorizing Articles",
     compiling_digest: "Compiling Daily Digest",
     publishing: "Publishing",
+    dispatching_newsletter: "Dispatching Newsletter",
     done: "Complete",
     failed: "Failed",
     cancelled: "Stopped & Rolled Back",
@@ -788,6 +795,10 @@ function SettingsTab() {
   const [saved, setSaved] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showResendKey, setShowResendKey] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [testSending, setTestSending] = useState(false);
+  const [testMsg, setTestMsg] = useState<{ text: string; isError: boolean } | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/settings")
@@ -808,6 +819,7 @@ function SettingsTab() {
           imap: settings.imap,
           openrouter: settings.openrouter,
           automation: settings.automation,
+          newsletter: settings.newsletter,
         }),
       });
       setSaved(true);
@@ -816,6 +828,29 @@ function SettingsTab() {
       alert("Failed to save settings");
     }
     setSaving(false);
+  };
+
+  const sendTestEmail = async () => {
+    if (!testEmail) return;
+    setTestSending(true);
+    setTestMsg(null);
+    try {
+      const res = await fetch("/api/admin/newsletter/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: testEmail }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTestMsg({ text: data.message || "Test email sent!", isError: false });
+      } else {
+        setTestMsg({ text: data.error || "Failed to send test email.", isError: true });
+      }
+    } catch {
+      setTestMsg({ text: "Network error sending test email.", isError: true });
+    } finally {
+      setTestSending(false);
+    }
   };
 
   if (!settings) {
@@ -980,6 +1015,308 @@ function SettingsTab() {
             />
           </div>
         </div>
+
+        {/* Row 2 Right: Newsletter & Email Dispatch */}
+        <div className="card" style={{ padding: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <Mail size={16} style={{ color: "var(--color-accent)" }} /> Newsletter Dispatch
+            </h3>
+            <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600 }}>
+              <input
+                type="checkbox"
+                checked={settings.newsletter?.enabled ?? true}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    newsletter: {
+                      ...(settings.newsletter || {
+                        fromName: "Founders North",
+                        fromEmail: "briefing@news.foundersnorth.com",
+                        resendApiKey: "",
+                      }),
+                      enabled: e.target.checked,
+                    },
+                  })
+                }
+                style={{ width: "16px", height: "16px", cursor: "pointer" }}
+              />
+              {settings.newsletter?.enabled ?? true ? "Enabled" : "Disabled"}
+            </label>
+          </div>
+
+          <div style={{ marginBottom: "0.75rem" }}>
+            <label className="label">Resend API Key</label>
+            <div style={{ position: "relative" }}>
+              <input
+                className="input"
+                type={showResendKey ? "text" : "password"}
+                value={settings.newsletter?.resendApiKey || ""}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    newsletter: {
+                      ...(settings.newsletter || {
+                        enabled: true,
+                        fromName: "Founders North",
+                        fromEmail: "briefing@news.foundersnorth.com",
+                      }),
+                      resendApiKey: e.target.value,
+                    },
+                  })
+                }
+                placeholder="re_..."
+                style={{ paddingRight: "2.5rem" }}
+              />
+              <button
+                className="btn-ghost"
+                style={{ position: "absolute", right: "0.5rem", top: "50%", transform: "translateY(-50%)", padding: "0.25rem" }}
+                onClick={() => setShowResendKey(!showResendKey)}
+              >
+                {showResendKey ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
+            <div>
+              <label className="label">From Name</label>
+              <input
+                className="input"
+                value={settings.newsletter?.fromName || "Founders North"}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    newsletter: {
+                      ...(settings.newsletter || {
+                        enabled: true,
+                        fromEmail: "briefing@news.foundersnorth.com",
+                        resendApiKey: "",
+                      }),
+                      fromName: e.target.value,
+                    },
+                  })
+                }
+                placeholder="Founders North"
+              />
+            </div>
+            <div>
+              <label className="label">From Email</label>
+              <input
+                className="input"
+                value={settings.newsletter?.fromEmail || "briefing@news.foundersnorth.com"}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    newsletter: {
+                      ...(settings.newsletter || {
+                        enabled: true,
+                        fromName: "Founders North",
+                        resendApiKey: "",
+                      }),
+                      fromEmail: e.target.value,
+                    },
+                  })
+                }
+                placeholder="briefing@news.foundersnorth.com"
+              />
+            </div>
+          </div>
+
+          {/* Test Dispatch Box */}
+          <div style={{ background: "var(--color-bg-secondary)", borderRadius: "8px", padding: "0.75rem 1rem", border: "1px solid var(--color-border)" }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--color-text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: "0.4rem" }}>
+              Send Test Newsletter
+            </span>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <input
+                type="email"
+                className="input"
+                placeholder="your@email.com"
+                value={testEmail}
+                onChange={(e) => setTestEmail(e.target.value)}
+                style={{ fontSize: "0.82rem", height: "34px", flex: 1 }}
+              />
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={sendTestEmail}
+                disabled={testSending || !testEmail}
+                style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", height: "34px", fontSize: "0.8rem", flexShrink: 0 }}
+              >
+                {testSending ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                Send Test
+              </button>
+            </div>
+            {testMsg && (
+              <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", color: testMsg.isError ? "var(--color-danger, #ef4444)" : "var(--color-success)" }}>
+                {testMsg.text}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Subscribers Tab
+// ============================================================================
+
+function SubscribersTab() {
+  const [data, setData] = useState<{
+    count: { total: number; active: number; unsubscribed: number };
+    subscribers: Subscriber[];
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  const loadSubscribers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/subscribers");
+      const json = await res.json();
+      setData(json);
+    } catch (e) {
+      console.error("Failed to load subscribers:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSubscribers();
+  }, [loadSubscribers]);
+
+  const filtered = (data?.subscribers || []).filter((s) =>
+    s.email.toLowerCase().includes(search.toLowerCase().trim())
+  );
+
+  return (
+    <div className="animate-fade-in" style={{ maxWidth: "1050px" }}>
+      {/* Top Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem" }}>
+        <div>
+          <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Subscribers</h2>
+          <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)" }}>
+            Readers receiving the automated daily briefing at 7:30 AM ET.
+          </p>
+        </div>
+        <button
+          className="btn btn-outline"
+          onClick={loadSubscribers}
+          disabled={loading}
+          style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.85rem" }}
+        >
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          Refresh
+        </button>
+      </div>
+
+      {/* KPI Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+        <div className="card" style={{ padding: "1.25rem" }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.4rem" }}>
+            Total Subscribers
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--color-text-primary)" }}>
+            {data?.count.total ?? 0}
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: "1.25rem" }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--color-success)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.4rem" }}>
+            Active Readers
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--color-success)" }}>
+            {data?.count.active ?? 0}
+          </div>
+        </div>
+
+        <div className="card" style={{ padding: "1.25rem" }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--color-text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.4rem" }}>
+            Unsubscribed
+          </div>
+          <div style={{ fontSize: "1.75rem", fontWeight: 800, color: "var(--color-text-tertiary)" }}>
+            {data?.count.unsubscribed ?? 0}
+          </div>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div style={{ marginBottom: "1rem" }}>
+        <input
+          type="text"
+          className="input"
+          placeholder="Filter by email address..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ maxWidth: "340px", fontSize: "0.85rem" }}
+        />
+      </div>
+
+      {/* Table */}
+      <div className="card" style={{ overflow: "hidden", padding: 0 }}>
+        {loading && !data ? (
+          <div style={{ display: "flex", justifyContent: "center", padding: "3rem" }}>
+            <Loader2 className="animate-spin" size={24} style={{ color: "var(--color-accent)" }} />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: "3rem 1.5rem", textAlign: "center" }}>
+            <Users size={36} style={{ color: "var(--color-text-tertiary)", margin: "0 auto 0.75rem" }} />
+            <h4 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.25rem" }}>
+              {search ? "No matching subscribers" : "No subscribers yet"}
+            </h4>
+            <p style={{ fontSize: "0.85rem", color: "var(--color-text-tertiary)", margin: 0 }}>
+              {search ? "Try searching for a different keyword." : "When readers subscribe via the website, they will appear here."}
+            </p>
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-bg-secondary)", textAlign: "left" }}>
+                  <th style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "var(--color-text-secondary)" }}>Email</th>
+                  <th style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "var(--color-text-secondary)" }}>Status</th>
+                  <th style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "var(--color-text-secondary)" }}>Subscribed</th>
+                  <th style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "var(--color-text-secondary)" }}>Unsubscribed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((s) => (
+                  <tr key={s.id} style={{ borderBottom: "1px solid var(--color-border)" }}>
+                    <td style={{ padding: "0.75rem 1rem", fontWeight: 600, color: "var(--color-text-primary)" }}>
+                      {s.email}
+                    </td>
+                    <td style={{ padding: "0.75rem 1rem" }}>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding: "2px 8px",
+                          borderRadius: "12px",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.04em",
+                          background: s.status === "active" ? "rgba(16, 185, 129, 0.12)" : "rgba(100, 116, 139, 0.12)",
+                          color: s.status === "active" ? "var(--color-success)" : "var(--color-text-tertiary)",
+                        }}
+                      >
+                        {s.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: "0.75rem 1rem", color: "var(--color-text-secondary)", fontSize: "0.8rem" }}>
+                      {s.subscribedAt ? new Date(s.subscribedAt).toLocaleString() : "-"}
+                    </td>
+                    <td style={{ padding: "0.75rem 1rem", color: "var(--color-text-tertiary)", fontSize: "0.8rem" }}>
+                      {s.unsubscribedAt ? new Date(s.unsubscribedAt).toLocaleString() : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -31,11 +31,28 @@ export interface AutomationConfig {
   lastRunAt?: string;
 }
 
+export interface NewsletterConfig {
+  enabled: boolean;
+  fromName: string; // e.g. "Founders North"
+  fromEmail: string; // e.g. "briefing@news.foundersnorth.com"
+  resendApiKey?: string;
+}
+
+export interface Subscriber {
+  id: string; // email lowercase
+  email: string;
+  status: "active" | "unsubscribed";
+  subscribedAt: string;
+  unsubscribeToken: string;
+  unsubscribedAt?: string;
+}
+
 export interface AppSettings {
   imap: MailboxConfig;
   openrouter: OpenRouterConfig;
   prompts: PromptSettings;
   automation?: AutomationConfig;
+  newsletter?: NewsletterConfig;
 }
 
 export interface SourceLink {
@@ -107,6 +124,7 @@ export type PipelineStage =
   | "categorizing"
   | "compiling_digest"
   | "publishing"
+  | "dispatching_newsletter"
   | "done"
   | "failed"
   | "cancelled";

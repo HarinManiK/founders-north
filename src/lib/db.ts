@@ -5,6 +5,7 @@
 import { getDb } from "./firebase";
 import { FieldValue } from "firebase-admin/firestore";
 import { DEFAULT_PROMPTS } from "./prompts";
+import { randomUUID } from "crypto";
 import type {
   AppSettings,
   Article,
@@ -14,6 +15,7 @@ import type {
   RunLogMessage,
   ProcessedEmail,
   PipelineStage,
+  Subscriber,
 } from "@/types";
 
 // ---- Settings ----
@@ -36,6 +38,12 @@ export async function getSettings(): Promise<AppSettings> {
         githubToken: "",
         githubRepo: "HarinManiK/founders-north",
       },
+      newsletter: {
+        enabled: true,
+        fromName: "Founders North",
+        fromEmail: "briefing@news.foundersnorth.com",
+        resendApiKey: process.env.RESEND_API_KEY || "",
+      },
     };
   }
 
@@ -55,6 +63,12 @@ export async function getSettings(): Promise<AppSettings> {
       timezone: "America/New_York",
       githubToken: "",
       githubRepo: "HarinManiK/founders-north",
+    },
+    newsletter: data.newsletter || {
+      enabled: true,
+      fromName: "Founders North",
+      fromEmail: "briefing@news.foundersnorth.com",
+      resendApiKey: process.env.RESEND_API_KEY || "",
     },
   };
 }
@@ -413,4 +427,116 @@ export async function rollbackRun(runId: string): Promise<{ deletedArticles: num
     deletedArticles: articlesSnap.size,
     deletedDigests: digestsSnap.size,
   };
+}
+
+// ---- Subscribers ----
+
+export async function addSubscriber(rawEmail: string): Promise<{
+  success: boolean;
+  subscriber: Subscriber;
+  alreadySubscribed?: boolean;
+  reactivated?: boolean;
+}> {
+  const db = getDb();
+  const email = rawEmail.trim().toLowerCase();
+  const docRef = db.collection("subscribers").doc(email);
+  const snap = await docRef.get();
+
+  if (snap.exists) {
+    const existing = snap.data() as Subscriber;
+    if (existing.status === "active") {
+      return { success: true, subscriber: existing, alreadySubscribed: true };
+    }
+    // Re-activate if previously unsubscribed
+    const updated: Partial<Subscriber> = {
+      status: "active",
+      subscribedAt: new Date().toISOString(),
+      unsubscribeToken: existing.unsubscribeToken || randomUUID(),
+    };
+    await docRef.set(updated, { merge: true });
+    return {
+      success: true,
+      subscriber: { ...existing, ...updated } as Subscriber,
+      reactivated: true,
+    };
+  }
+
+  const newSubscriber: Subscriber = {
+    id: email,
+    email,
+    status: "active",
+    subscribedAt: new Date().toISOString(),
+    unsubscribeToken: randomUUID(),
+  };
+
+  await docRef.set(newSubscriber);
+  return { success: true, subscriber: newSubscriber };
+}
+
+export async function getSubscriberByToken(token: string): Promise<Subscriber | null> {
+  if (!token) return null;
+  const db = getDb();
+  const snap = await db
+    .collection("subscribers")
+    .where("unsubscribeToken", "==", token)
+    .limit(1)
+    .get();
+
+  return snap.empty ? null : (snap.docs[0].data() as Subscriber);
+}
+
+export async function unsubscribeByToken(token: string): Promise<{ success: boolean; email?: string }> {
+  if (!token) return { success: false };
+  const db = getDb();
+  const snap = await db
+    .collection("subscribers")
+    .where("unsubscribeToken", "==", token)
+    .limit(1)
+    .get();
+
+  if (snap.empty) return { success: false };
+
+  const doc = snap.docs[0];
+  await doc.ref.update({
+    status: "unsubscribed",
+    unsubscribedAt: new Date().toISOString(),
+  });
+
+  return { success: true, email: doc.data().email };
+}
+
+export async function getActiveSubscribers(): Promise<Subscriber[]> {
+  const db = getDb();
+  const snap = await db
+    .collection("subscribers")
+    .where("status", "==", "active")
+    .get();
+
+  return snap.docs.map((d) => d.data() as Subscriber);
+}
+
+export async function getAllSubscribers(limit = 100): Promise<Subscriber[]> {
+  const db = getDb();
+  const snap = await db
+    .collection("subscribers")
+    .orderBy("subscribedAt", "desc")
+    .limit(limit)
+    .get();
+
+  return snap.docs.map((d) => d.data() as Subscriber);
+}
+
+export async function getSubscribersCount(): Promise<{ total: number; active: number; unsubscribed: number }> {
+  const db = getDb();
+  const snap = await db.collection("subscribers").get();
+  let active = 0;
+  let unsubscribed = 0;
+
+  snap.docs.forEach((d) => {
+    const data = d.data();
+    if (data.status === "active") active++;
+    else if (data.status === "unsubscribed") unsubscribed++;
+  });
+
+  return { total: snap.size, active, unsubscribed };
 }
