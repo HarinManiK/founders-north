@@ -13,7 +13,7 @@ interface SubscribeBoxProps {
 export default function SubscribeBox({
   variant = "strip",
   title = "Get this briefing in your inbox every morning (7:30 AM ET)",
-  subtitle = "Free weekday edition &bull; No spam, 1-click unsubscribe",
+  subtitle = "Free daily edition &bull; No spam, 1-click unsubscribe",
   className = "",
 }: SubscribeBoxProps) {
   const [email, setEmail] = useState("");

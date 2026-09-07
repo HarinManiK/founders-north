@@ -189,7 +189,7 @@ export function generateNewsletterEmail({
                   Founders North &bull; Daily Briefing
                 </p>
                 <p style="margin: 0 0 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #64748b;">
-                  Curated business, startup, and tech intelligence delivered every weekday at 7:30 AM ET.
+                  Curated business, startup, and tech intelligence delivered every morning at 7:30 AM ET.
                 </p>
                 
                 <!-- Noticeable Action Buttons -->
