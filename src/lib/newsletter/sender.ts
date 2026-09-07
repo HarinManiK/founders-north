@@ -68,14 +68,19 @@ export async function sendWelcomeEmail(
           Every morning at <strong>7:30 AM ET</strong>, you'll receive our curated digest covering the most critical founder news, market shifts, tech breakthroughs, and startup developments.
         </p>
         <div style="margin-bottom: 28px;">
-          <a href="${siteUrl}" target="_blank" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 13px; font-weight: 600; text-decoration: none; padding: 10px 20px; border-radius: 6px;">
+          <a href="${siteUrl}" target="_blank" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 13px; font-weight: 600; text-decoration: none; padding: 10px 22px; border-radius: 6px;">
             Read Today's Briefing Online &rarr;
           </a>
         </div>
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 16px;" />
-        <p style="font-size: 11px; color: #94a3b8; margin: 0; line-height: 1.5;">
-          You can <a href="${unsubscribeUrl}" target="_blank" style="color: #64748b; text-decoration: underline;">unsubscribe with one click</a> anytime.
-        </p>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 20px;" />
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; text-align: center;">
+          <p style="margin: 0 0 10px; font-size: 12px; color: #64748b; line-height: 1.4;">
+            No longer wish to receive the Founders North Daily Briefing?
+          </p>
+          <a href="${unsubscribeUrl}" target="_blank" style="display: inline-block; font-size: 12px; font-weight: 600; color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 6px 14px; text-decoration: none;">
+            Unsubscribe in 1 Click
+          </a>
+        </div>
       </div>
     </body>
     </html>

@@ -3,29 +3,34 @@
 // ---------------------------------------------------------------------------
 
 import { NextRequest, NextResponse } from "next/server";
-import { unsubscribeByToken, getSubscriberByToken } from "@/lib/db";
-import { getSiteUrl } from "@/lib/site";
+import { unsubscribeByToken } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
-  const siteUrl = getSiteUrl().replace(/\/+$/, "");
   const token = request.nextUrl.searchParams.get("token")?.trim() || "";
 
   if (!token) {
-    return NextResponse.redirect(`${siteUrl}/unsubscribe?error=missing_token`);
+    return NextResponse.redirect(new URL("/unsubscribe?error=missing_token", request.url));
+  }
+
+  // Handle test broadcast emails gracefully
+  if (token === "test-unsubscribe-token") {
+    return NextResponse.redirect(
+      new URL("/unsubscribe?success=true&email=demo%40foundersnorth.com", request.url)
+    );
   }
 
   try {
     const result = await unsubscribeByToken(token);
 
     if (!result.success) {
-      return NextResponse.redirect(`${siteUrl}/unsubscribe?error=invalid_token`);
+      return NextResponse.redirect(new URL("/unsubscribe?error=invalid_token", request.url));
     }
 
     const emailParam = result.email ? `&email=${encodeURIComponent(result.email)}` : "";
-    return NextResponse.redirect(`${siteUrl}/unsubscribe?success=true${emailParam}`);
+    return NextResponse.redirect(new URL(`/unsubscribe?success=true${emailParam}`, request.url));
   } catch (err) {
     console.error("[Unsubscribe API Error]", err);
-    return NextResponse.redirect(`${siteUrl}/unsubscribe?error=server_error`);
+    return NextResponse.redirect(new URL("/unsubscribe?error=server_error", request.url));
   }
 }
 
@@ -36,6 +41,10 @@ export async function POST(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json({ error: "Missing unsubscribe token" }, { status: 400 });
+    }
+
+    if (token === "test-unsubscribe-token") {
+      return NextResponse.json({ success: true, email: "demo@foundersnorth.com" });
     }
 
     const result = await unsubscribeByToken(token);

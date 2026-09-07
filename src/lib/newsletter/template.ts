@@ -179,20 +179,41 @@ export function generateNewsletterEmail({
         </td>
       </tr>
 
-      <!-- Footer -->
+      <!-- Footer & Subscription Management Card -->
       <tr>
-        <td style="padding: 24px 20px 40px; text-align: center;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <td style="padding: 28px 16px 40px;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
             <tr>
-              <td align="center" style="font-size: 12px; line-height: 1.5; color: #94a3b8; padding-bottom: 12px;">
-                Founders North &bull; Essential news and deep-dive analysis for founders and leaders.<br>
-                Read every story in depth on <a href="${cleanSiteUrl}" target="_blank" style="color: #64748b; text-decoration: underline;">foundersnorth.com</a>.
-              </td>
-            </tr>
-            <tr>
-              <td align="center" style="font-size: 11px; line-height: 1.5; color: #94a3b8;">
-                You are receiving this because you subscribed on our website.<br>
-                <a href="${unsubscribeUrl}" target="_blank" style="color: #94a3b8; text-decoration: underline;">Unsubscribe with one click</a> &bull; <a href="${digestUrl}" target="_blank" style="color: #94a3b8; text-decoration: underline;">View in browser</a>
+              <td style="padding: 24px 20px; text-align: center;">
+                <p style="margin: 0 0 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.06em;">
+                  Founders North &bull; Daily Briefing
+                </p>
+                <p style="margin: 0 0 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #64748b;">
+                  Curated business, startup, and tech intelligence delivered every weekday at 7:30 AM ET.
+                </p>
+                
+                <!-- Noticeable Action Buttons -->
+                <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto 16px;">
+                  <tr>
+                    <td style="padding: 0 6px;">
+                      <a href="${digestUrl}" target="_blank" style="display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; color: #2563eb; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 8px 18px; text-decoration: none;">
+                        Read Full Briefing Online &rarr;
+                      </a>
+                    </td>
+                    <td style="padding: 0 6px;">
+                      <a href="${unsubscribeUrl}" target="_blank" style="display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 8px 18px; text-decoration: none;">
+                        Unsubscribe
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 16px 0;" />
+
+                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.5; color: #94a3b8;">
+                  You received this email because you are subscribed to Founders North.<br>
+                  No longer wish to receive these emails? Click the <strong><a href="${unsubscribeUrl}" target="_blank" style="color: #64748b; text-decoration: underline;">Unsubscribe button</a></strong> above to be removed instantly in one click.
+                </p>
               </td>
             </tr>
           </table>
