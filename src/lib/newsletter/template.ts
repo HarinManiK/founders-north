@@ -33,7 +33,7 @@ export function generateNewsletterEmail({
     })
     .join("\n");
 
-  const text = `FOUNDERS NORTH — DAILY BRIEFING\n${digest.title}\n\nEXECUTIVE SUMMARY\n${digest.summary}\n\nTODAY'S HIGHLIGHTS\n\n${highlightsText}\n\nRead the complete briefing online:\n${digestUrl}\n\n---\nYou are receiving this email because you subscribed on ${cleanSiteUrl}.\nUnsubscribe with one click: ${unsubscribeUrl}\n`;
+  const text = `FOUNDERS NORTH — DAILY BRIEFING\n${digest.title}\n\nEXECUTIVE SUMMARY\n${digest.summary}\n\nTODAY'S HIGHLIGHTS\n\n${highlightsText}\n\nRead Today's Briefing Online:\n${digestUrl}\n\nUnsubscribe:\n${unsubscribeUrl}\n`;
 
   // Generate responsive HTML
   const highlightsHtml = (digest.highlights || [])
@@ -179,41 +179,22 @@ export function generateNewsletterEmail({
         </td>
       </tr>
 
-      <!-- Footer & Subscription Management Card -->
+      <!-- Footer Actions -->
       <tr>
-        <td style="padding: 28px 16px 40px;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+        <td align="center" style="padding: 32px 20px 48px; text-align: center;">
+          <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
             <tr>
-              <td style="padding: 24px 20px; text-align: center;">
-                <p style="margin: 0 0 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.06em;">
-                  Founders North &bull; Daily Briefing
-                </p>
-                <p style="margin: 0 0 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #64748b;">
-                  Curated business, startup, and tech intelligence delivered every morning at 7:30 AM ET.
-                </p>
-                
-                <!-- Noticeable Action Buttons -->
-                <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto 16px;">
-                  <tr>
-                    <td style="padding: 0 6px;">
-                      <a href="${digestUrl}" target="_blank" style="display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; color: #2563eb; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 8px 18px; text-decoration: none;">
-                        Read Full Briefing Online &rarr;
-                      </a>
-                    </td>
-                    <td style="padding: 0 6px;">
-                      <a href="${unsubscribeUrl}" target="_blank" style="display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 8px 18px; text-decoration: none;">
-                        Unsubscribe
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-
-                <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 16px 0;" />
-
-                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.5; color: #94a3b8;">
-                  You received this email because you are subscribed to Founders North.<br>
-                  No longer wish to receive these emails? Click the <strong><a href="${unsubscribeUrl}" target="_blank" style="color: #64748b; text-decoration: underline;">Unsubscribe button</a></strong> above to be removed instantly in one click.
-                </p>
+              <td align="center" style="padding-bottom: 12px;">
+                <a href="${digestUrl}" target="_blank" style="display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; background-color: #2563eb; border-radius: 6px; padding: 11px 24px; text-decoration: none; min-width: 220px; text-align: center;">
+                  Read Today's Briefing Online &rarr;
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td align="center">
+                <a href="${unsubscribeUrl}" target="_blank" style="display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #64748b; background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 24px; text-decoration: none; min-width: 220px; text-align: center;">
+                  Unsubscribe
+                </a>
               </td>
             </tr>
           </table>

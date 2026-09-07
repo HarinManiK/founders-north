@@ -67,30 +67,35 @@ export async function sendWelcomeEmail(
         <p style="font-size: 14px; line-height: 1.6; color: #475569; margin-bottom: 24px;">
           Every morning at <strong>7:30 AM ET</strong>, you'll receive our curated digest covering the most critical founder news, market shifts, tech breakthroughs, and startup developments.
         </p>
-        <div style="margin-bottom: 28px;">
-          <a href="${siteUrl}" target="_blank" style="display: inline-block; background-color: #2563eb; color: #ffffff; font-size: 13px; font-weight: 600; text-decoration: none; padding: 10px 22px; border-radius: 6px;">
-            Read Today's Briefing Online &rarr;
-          </a>
-        </div>
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 20px;" />
-        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; text-align: center;">
-          <p style="margin: 0 0 10px; font-size: 12px; color: #64748b; line-height: 1.4;">
-            No longer wish to receive the Founders North Daily Briefing?
-          </p>
-          <a href="${unsubscribeUrl}" target="_blank" style="display: inline-block; font-size: 12px; font-weight: 600; color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 6px 14px; text-decoration: none;">
-            Unsubscribe in 1 Click
-          </a>
-        </div>
+        <table cellpadding="0" cellspacing="0" border="0" style="margin: 28px auto 0;">
+          <tr>
+            <td align="center" style="padding-bottom: 12px;">
+              <a href="${siteUrl}" target="_blank" style="display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #ffffff; background-color: #2563eb; border-radius: 6px; padding: 11px 24px; text-decoration: none; min-width: 220px; text-align: center;">
+                Read Today's Briefing Online &rarr;
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td align="center">
+              <a href="${unsubscribeUrl}" target="_blank" style="display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #64748b; background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 24px; text-decoration: none; min-width: 220px; text-align: center;">
+                Unsubscribe
+              </a>
+            </td>
+          </tr>
+        </table>
       </div>
     </body>
     </html>
     `;
+
+    const text = `FOUNDERS NORTH — WELCOME\n\nWelcome! You are now subscribed to the Founders North Daily Briefing.\n\nEvery morning at 7:30 AM ET, you'll receive our curated digest covering the most critical founder news, market shifts, tech breakthroughs, and startup developments.\n\nRead Today's Briefing Online:\n${siteUrl}\n\nUnsubscribe:\n${unsubscribeUrl}\n`;
 
     await config.client.emails.send({
       from: config.from,
       to: subscriber.email,
       subject: "Welcome to Founders North Daily Briefing",
       html,
+      text,
     });
 
     return { success: true };
