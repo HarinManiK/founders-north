@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Mail, Check, ArrowRight, Loader2 } from "lucide-react";
 
 interface SubscribeBoxProps {
-  variant?: "strip" | "compact" | "card";
+  variant?: "strip" | "compact";
   title?: string;
   subtitle?: string;
   className?: string;
@@ -13,7 +13,7 @@ interface SubscribeBoxProps {
 export default function SubscribeBox({
   variant = "strip",
   title = "Get this briefing in your inbox every morning (7:30 AM ET)",
-  subtitle = "Free daily edition &bull; No spam, 1-click unsubscribe",
+  subtitle = "Free daily briefing, unsubscribe anytime",
   className = "",
 }: SubscribeBoxProps) {
   const [email, setEmail] = useState("");
@@ -68,7 +68,7 @@ export default function SubscribeBox({
     }
   };
 
-  // Success Feedback State
+  // Success Feedback
   if (status === "success") {
     return (
       <div
@@ -87,8 +87,8 @@ export default function SubscribeBox({
       >
         <div
           style={{
-            width: "34px",
-            height: "34px",
+            width: "32px",
+            height: "32px",
             borderRadius: "50%",
             background: "rgba(16, 185, 129, 0.15)",
             color: "#10b981",
@@ -136,17 +136,7 @@ export default function SubscribeBox({
     return (
       <div className={`subscribe-compact ${className}`}>
         <form onSubmit={handleSubmit} style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: "1 1 200px" }}>
-            <Mail
-              size={15}
-              style={{
-                position: "absolute",
-                left: "0.85rem",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "var(--color-text-tertiary)",
-              }}
-            />
+          <div style={{ position: "relative", flex: "1 1 180px" }}>
             <input
               type="email"
               value={email}
@@ -155,7 +145,6 @@ export default function SubscribeBox({
               className="input"
               disabled={loading}
               style={{
-                paddingLeft: "2.3rem",
                 fontSize: "0.85rem",
                 height: "38px",
                 width: "100%",
@@ -189,107 +178,7 @@ export default function SubscribeBox({
     );
   }
 
-  // Card Variant for In-Article Callouts
-  if (variant === "card") {
-    return (
-      <div
-        className={`subscribe-box-card ${className}`}
-        style={{
-          background: "var(--color-bg-card)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "14px",
-          padding: "1.25rem 1.5rem",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.75rem" }}>
-          <div
-            style={{
-              width: "30px",
-              height: "30px",
-              borderRadius: "8px",
-              background: "rgba(37, 99, 235, 0.1)",
-              color: "var(--color-accent)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Mail size={15} />
-          </div>
-          <div>
-            <h4
-              style={{
-                margin: 0,
-                fontSize: "0.95rem",
-                fontWeight: 700,
-                color: "var(--color-text-primary)",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}
-            >
-              {title}
-            </h4>
-            <span style={{ fontSize: "0.76rem", color: "var(--color-text-tertiary)" }}>
-              Delivered daily at 7:30 AM ET &bull; Free forever
-            </span>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address..."
-              className="input"
-              disabled={loading}
-              style={{
-                fontSize: "0.85rem",
-                height: "40px",
-                flex: "1 1 200px",
-                boxSizing: "border-box",
-              }}
-              required
-            />
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-              style={{
-                height: "40px",
-                padding: "0 1.25rem",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.35rem",
-                flexShrink: 0,
-              }}
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" /> Sending...
-                </>
-              ) : (
-                <>
-                  Send Daily <ArrowRight size={13} />
-                </>
-              )}
-            </button>
-          </div>
-          {status === "error" && (
-            <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", color: "var(--color-danger, #ef4444)" }}>
-              {message}
-            </p>
-          )}
-        </form>
-      </div>
-    );
-  }
-
-  // Default: Ultra-Slim "Strip" Bar (Minimal Space, High Conversion)
+  // Default: Sleek Strip Bar (Homepage & Articles)
   return (
     <div
       className={`subscribe-bar-strip ${className}`}
@@ -308,7 +197,7 @@ export default function SubscribeBox({
         boxSizing: "border-box",
       }}
     >
-      {/* Left: Headline & Subtle Timing */}
+      {/* Left: Headline & Clearly Visible Subtitle */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", minWidth: "260px" }}>
         <div
           style={{
@@ -340,12 +229,15 @@ export default function SubscribeBox({
           </div>
           <div
             style={{
-              fontSize: "0.74rem",
-              color: "var(--color-text-tertiary)",
-              marginTop: "1px",
+              fontSize: "0.82rem",
+              fontWeight: 500,
+              color: "var(--color-text-secondary)",
+              marginTop: "2px",
+              lineHeight: 1.3,
             }}
-            dangerouslySetInnerHTML={{ __html: subtitle }}
-          />
+          >
+            {subtitle}
+          </div>
         </div>
       </div>
 
